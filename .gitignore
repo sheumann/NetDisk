@@ -1,0 +1,5 @@
+*.a
+*.root
+*.o
+gs.out
+a.out
