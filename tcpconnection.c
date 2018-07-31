@@ -20,11 +20,8 @@ Word StartTCPConnection(Session *sess) {
     srBuff mySRBuff;
     LongWord initialTime;
     
-    if (TCPIPGetConnectStatus() == FALSE) {
-        TCPIPConnect(NULL);
-        if (toolerror())
-            return aspNetworkErr;
-    }
+    /* End any existing TCP connection */
+    EndTCPConnection(sess);
     
     sess->ipid = 
         TCPIPLogin(userid(), sess->ipAddr, sess->port, 0, 0x40);

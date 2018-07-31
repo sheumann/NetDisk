@@ -7,7 +7,14 @@
 Boolean DoLookupName(Session *sess) {
     dnrBuffer dnrInfo;
 
-    TCPIPDNRNameToIP(sess->domainName, &dnrInfo);
+    if (TCPIPValidateIPString(sess->hostName)) {
+        cvtRec cvtInfo;
+        TCPIPConvertIPToHex(&cvtInfo, sess->hostName);
+        sess->ipAddr = cvtInfo.cvtIPAddress;
+        return TRUE;
+    }
+
+    TCPIPDNRNameToIP(sess->hostName, &dnrInfo);
     if (toolerror())
         return FALSE;
 
@@ -22,6 +29,9 @@ Boolean DoLookupName(Session *sess) {
         sess->ipAddr = dnrInfo.DNRIPaddress;
         return TRUE;
     } else {
+        if (dnrInfo.DNRstatus == DNR_Pending) {
+            TCPIPCancelDNR(&dnrInfo);
+        }
         return FALSE;
     }
 }

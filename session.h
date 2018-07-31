@@ -25,8 +25,8 @@ typedef struct Session {
     LongWord ipAddr;
     Word port;
 
-    /* Domain name of host (p-string; empty string for host specified by IP) */
-    char domainName[256];
+    /* Domain name or IP address of host (p-string, but also null-terminated) */
+    char hostName[257];
     /* Time (GetTick) of last DNS lookup */
     LongWord dnsTime;
 } Session;

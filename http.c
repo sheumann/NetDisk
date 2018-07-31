@@ -7,14 +7,14 @@
 #include "session.h"
 #include "http.h"
 
-Boolean BuildHTTPRequest(Session *sess, char *resourceStr, char *hostStr) {
+Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
     int sizeNeeded = 0;
     int rangeOffset;
     int round = 0;
 
     do {
         sizeNeeded = snprintf(sess->httpRequest, sizeNeeded, 
-            "GET %s HTTP/1.1\r\n"
+            "GET /%s HTTP/1.1\r\n"
             "Host: %s\r\n"
             "User-Agent: GSRemoteDisk/0.1\r\n"
             "Accept-Encoding: identity\r\n"
@@ -23,7 +23,7 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr, char *hostStr) {
             "Range: bytes=%n1234567890-1234567890\r\n"
             "\r\n",
             resourceStr,
-            hostStr,
+            sess->hostName+1,
             &rangeOffset);
 
         if (sizeNeeded <= 0) {
