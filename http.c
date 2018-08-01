@@ -14,6 +14,7 @@
 #include "http.h"
 #include "tcpconnection.h"
 #include "strcasecmp.h"
+#include "seturl.h"
 
 #define buffTypePointer 0x0000      /* For TCPIPReadTCP() */
 #define buffTypeHandle 0x0001
@@ -70,31 +71,52 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
     } while (round++ == 0);
     
     sess->httpRequestRange = sess->httpRequest + rangeOffset;
+    
+    UpdateRequestRange(sess, sess->desiredStart, sess->desiredEnd);
+    
     return TRUE;
 }
+
 
 void UpdateRequestRange(Session *sess, unsigned long start, unsigned long end) {
     int count = 
         snprintf(sess->httpRequestRange, 10+1+10+5, "%lu-%lu\r\n\r\n", start, end);
 
+    sess->desiredStart = start;
+    sess->desiredEnd = end;
+
     sess->httpRequestLen = sess->httpRequestRange - sess->httpRequest + count;
 }
 
-#pragma debug -1
 
 enum RequestResult DoHTTPRequest(Session *sess) {
 top:;
     rlrBuff rlrBuff = {0};
     Word tcpError;
-    Boolean wantRedirect = FALSE;
+    Boolean wantRedirect = FALSE, gotRedirect = FALSE;
     enum RequestResult result;
+    
+    sess->responseCode = 0;
 
     /* Send out request */
     result = NETWORK_ERROR;
-    tcpError = TCPIPWriteTCP(sess->ipid, sess->httpRequest,
-                             sess->httpRequestLen, TRUE, FALSE);
-    if (tcpError || toolerror())
-        goto errorReturn;
+    unsigned int netErrors = 0;
+    do {
+        if (!sess->tcpLoggedIn || netErrors) {
+            if (StartTCPConnection(sess) != 0)
+                goto errorReturn;
+        }
+        tcpError = TCPIPWriteTCP(sess->ipid, sess->httpRequest,
+                                 sess->httpRequestLen, TRUE, FALSE);
+        if (tcpError || toolerror()) {
+            if (netErrors == 0) {
+                netErrors++;
+                continue;
+            } else {
+                goto errorReturn;
+            }
+        }
+    } while (0);
     
     /* Get response status line & headers */
     LongWord startTime = GetTick();
@@ -158,7 +180,7 @@ top:;
     response++;
 
 
-    switch(sess->responseCode) {
+    switch((unsigned int)sess->responseCode) {
     /* "Partial content" response, as expected */
     case 206:
         break;
@@ -190,21 +212,25 @@ top:;
     while (response < responseEnd - 2) {
         enum ResponseHeader header = UNKNOWN_HEADER;
         
-        if (strncasecmp(response, "Content-Range:", 14) == 0) {
-            response += 14;
-            header = CONTENT_RANGE;
-        } else if (strncasecmp(response, "Content-Length:", 15) == 0) {
-            response += 15;
-            header = CONTENT_LENGTH;
-        } else if (strncasecmp(response, "Transfer-Encoding:", 18) == 0) {
-            response += 18;
-            header = TRANSFER_ENCODING;
-        } else if (strncasecmp(response, "Content-Encoding:", 17) == 0) {
-            response += 17;
-            header = CONTENT_ENCODING;
-        } else if (strncasecmp(response, "Location:", 9) == 0) {
-            response += 9;
-            header = LOCATION;
+        if (wantRedirect) {
+            if (strncasecmp(response, "Location:", 9) == 0) {
+                response += 9;
+                header = LOCATION;
+            }
+        } else {
+            if (strncasecmp(response, "Content-Range:", 14) == 0) {
+                response += 14;
+                header = CONTENT_RANGE;
+            } else if (strncasecmp(response, "Content-Length:", 15) == 0) {
+                response += 15;
+                header = CONTENT_LENGTH;
+            } else if (strncasecmp(response, "Transfer-Encoding:", 18) == 0) {
+                response += 18;
+                header = TRANSFER_ENCODING;
+            } else if (strncasecmp(response, "Content-Encoding:", 17) == 0) {
+                response += 17;
+                header = CONTENT_ENCODING;
+            }
         }
         
         while ((*response == ' ' || *response == '\t') && response < responseEnd)
@@ -240,7 +266,9 @@ top:;
         case CONTENT_LENGTH:
             errno = 0;
             sess->contentLength = strtoul(response, &endPtr, 10);
-            if (errno || sess->contentLength == 0)
+            if (errno)
+                goto errorReturn;
+            if (sess->contentLength == 0 && !wantRedirect)
                 goto errorReturn;
             response = endPtr;
             break;
@@ -254,7 +282,23 @@ top:;
             }
             break;
         
-        case LOCATION: /*TODO*/ ;
+        case LOCATION:
+            endPtr = response;
+            char c;
+            while ((c = *endPtr)!=0 && c!='\r' && c!='\n' && c!=' ' && c!='\t')
+                endPtr++;
+            if (c == '\0' || c == '\n')
+                goto errorReturn;
+            if (wantRedirect) {
+                *endPtr = '\0';
+                if (SetURL(sess, response, FALSE, TRUE) != SETURL_SUCCESSFUL) {
+                    result = REDIRECT_ERROR;
+                    goto errorReturn;
+                }
+                *endPtr = c;
+                response = endPtr;
+                gotRedirect = TRUE;
+            }
         
         /* Unknown headers: ignored */
         case UNKNOWN_HEADER:
@@ -275,14 +319,35 @@ top:;
         response++;
     }
     
-    /* Wanted redirect, but to Location header found */
+    /* Wanted redirect: Retry with new location if we got it. */
     if (wantRedirect) {
-        result = UNSUPPORTED_RESPONSE;
+        if (gotRedirect) {
+            DisposeHandle(rlrBuff.rlrBuffHandle);
+            goto top;
+        } else {
+            result = UNSUPPORTED_RESPONSE;
+            goto errorReturn;
+        }
+    }
+    
+    /* See if we got what we wanted */
+    if (sess->expectedLength != 0 && sess->totalLength != sess->expectedLength) {
+        result = DIFFERENT_LENGTH;
         goto errorReturn;
     }
     
+    result = NOT_DESIRED_CONTENT;
+    if (sess->rangeStart != sess->desiredStart)
+        goto errorReturn;
+    if (sess->rangeEnd != sess->desiredEnd)
+        goto errorReturn;
+    if (sess->contentLength != 0 
+        && sess->contentLength != (sess->desiredEnd - sess->desiredStart + 1))
+        goto errorReturn;
+
+    result = REQUEST_SUCCESSFUL;
     DisposeHandle(rlrBuff.rlrBuffHandle);
-    return REQUEST_SUCCESSFUL;
+    return result;
     
 errorReturn:
     if (rlrBuff.rlrBuffHandle != NULL) {

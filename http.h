@@ -12,6 +12,9 @@ enum RequestResult {
     EXCESSIVE_REDIRECTS,
     UNSUPPORTED_RESPONSE,
     UNSUPPORTED_HEADER_VALUE,
+    REDIRECT_ERROR,
+    NOT_DESIRED_CONTENT,
+    DIFFERENT_LENGTH, /* Might be considered successful later */
 };
 
 Boolean BuildHTTPRequest(Session *sess, char *resourceStr);

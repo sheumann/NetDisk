@@ -24,7 +24,7 @@ typedef struct Session {
     LongWord httpRequestLen;
     
     /* HTTP response code */
-    unsigned long responseCode;
+    LongWord responseCode;
 
     /* IP address and TCP port of host */
     LongWord ipAddr;
@@ -42,6 +42,11 @@ typedef struct Session {
     LongWord rangeStart, rangeEnd, totalLength;
     /* Value reported by server in Content-Length header */
     LongWord contentLength;
+    
+    /* Desired start/end of range for next request */
+    LongWord desiredStart, desiredEnd;
+    /* Expected length of disk image */
+    LongWord expectedLength;
 } Session;
 
 #endif
