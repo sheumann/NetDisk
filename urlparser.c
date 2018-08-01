@@ -25,8 +25,8 @@ URLParts ParseURL(char *url) {
     /* Detect relative URL (absolute-path reference only) */
     if (url[0] == '/') {
         if (url[1] != '/') {
-            url++;
-            goto pathPart;
+            urlParts.path = url + 1;
+            return urlParts;
         } else {
             urlParts.errorFound = 1;
             return urlParts;
@@ -90,7 +90,6 @@ URLParts ParseURL(char *url) {
         urlParts.port = sep + 1;
     }
 
-pathPart:
     return urlParts;
 }
 

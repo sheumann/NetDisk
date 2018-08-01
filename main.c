@@ -11,17 +11,11 @@
 #include "seturl.h"
 #include "hostname.h"
 
-#define buffTypePointer 0x0000      /* For TCPIPReadTCP() */
-#define buffTypeHandle 0x0001
-#define buffTypeNewHandle 0x0002
-
 /*
 http://archive.org/download/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg
 redirects to:
 http://ia800505.us.archive.org/16/items/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg
 */
-
-static char delimitStr[] = "\p\r\n\r\n";
 
 char *defaultURL = "http://ia800505.us.archive.org/16/items/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg";
 
@@ -72,32 +66,16 @@ int main(int argc, char **argv) {
         goto exit;
     }
     
-    TCPIPWriteTCP(sess.ipid, sess.httpRequest, strlen(sess.httpRequest), TRUE, FALSE);
+    enum RequestResult requestResult = DoHTTPRequest(&sess);
+    printf("RequestResult %i\n", requestResult);
 
-    rlrBuff rlrBuff = {0};
-    Word tcpError;
-    do {
-        TCPIPPoll();
-        tcpError = TCPIPReadLineTCP(sess.ipid,
-                (void*)((LongWord)delimitStr | 0x80000000),
-                buffTypeNewHandle, (Ref)NULL,
-                0xFFFFFF, &rlrBuff);
-        if (tcpError || toolerror()) {
-            printf("tcpError = %u, toolerror = %u\n", tcpError, toolerror());
-            break;
-        }
-    } while (rlrBuff.rlrBuffCount == 0);
-
-    printf("Response:\n");
-    printf("=========\n");
-    for (int i = 0; i < rlrBuff.rlrBuffCount; i++) {
-        char ch = ((char*)*(rlrBuff.rlrBuffHandle))[i];
-        if (ch != '\r')
-            putchar(ch);
+    if (requestResult == REQUEST_SUCCESSFUL) {
+        printf("rangeStart    = %lu\n", sess.rangeStart);
+        printf("rangeEnd      = %lu\n", sess.rangeEnd);
+        printf("totalLength   = %lu\n", sess.totalLength);
+        printf("contentLength = %lu\n", sess.contentLength);
     }
-    printf("=========\n");
-    printf("Response size = %lu\n", rlrBuff.rlrBuffCount);
-    
+
     EndTCPConnection(&sess);
 
 exit:

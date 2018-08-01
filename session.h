@@ -20,6 +20,11 @@ typedef struct Session {
     char *httpRequest;
     /* Pointer to the range part within httpRequest */
     char *httpRequestRange;
+    /* Length of HTTP request */
+    LongWord httpRequestLen;
+    
+    /* HTTP response code */
+    unsigned long responseCode;
 
     /* IP address and TCP port of host */
     LongWord ipAddr;
@@ -29,6 +34,14 @@ typedef struct Session {
     char hostName[257];
     /* Time (GetTick) of last DNS lookup */
     LongWord dnsTime;
+    
+    /* Number of redirects followed */
+    Word redirectCount;
+    
+    /* Values reported by server in Content-Range header */
+    LongWord rangeStart, rangeEnd, totalLength;
+    /* Value reported by server in Content-Length header */
+    LongWord contentLength;
 } Session;
 
 #endif
