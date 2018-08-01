@@ -1,5 +1,6 @@
 #include <tcpip.h>
 #include <misctool.h>
+#include <orca.h>
 #include "hostname.h"
 
 #define DNR_WAIT_TIME 15 /*seconds*/

@@ -1,5 +1,7 @@
 #include <types.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
 #include "session.h"
 #include "urlparser.h"
 #include "strcasecmp.h"

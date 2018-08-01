@@ -10,6 +10,7 @@
 #include "session.h"
 #include "seturl.h"
 #include "hostname.h"
+#include "tcpconnection.h"
 
 /*
 http://archive.org/download/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg
@@ -57,7 +58,7 @@ int main(int argc, char **argv) {
             putchar(ch);
     }
     printf("=========\n");
-    printf("\n", i);
+    printf("\n");
 
     enum RequestResult requestResult;
     requestResult = DoHTTPRequest(&sess, startByte, startByte + 511);
