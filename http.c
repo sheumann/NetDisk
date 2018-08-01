@@ -33,6 +33,18 @@ enum ResponseHeader {
     LOCATION,
 };
 
+static void
+UpdateRequestRange(Session *sess, unsigned long start, unsigned long end) {
+    int count = 
+        snprintf(sess->httpRequestRange, 10+1+10+5, "%lu-%lu\r\n\r\n", start, end);
+
+    sess->desiredStart = start;
+    sess->desiredEnd = end;
+
+    sess->httpRequestLen = sess->httpRequestRange - sess->httpRequest + count;
+}
+
+
 Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
     int sizeNeeded = 0;
     int rangeOffset;
@@ -77,24 +89,15 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
     return TRUE;
 }
 
-
-void UpdateRequestRange(Session *sess, unsigned long start, unsigned long end) {
-    int count = 
-        snprintf(sess->httpRequestRange, 10+1+10+5, "%lu-%lu\r\n\r\n", start, end);
-
-    sess->desiredStart = start;
-    sess->desiredEnd = end;
-
-    sess->httpRequestLen = sess->httpRequestRange - sess->httpRequest + count;
-}
-
-
-enum RequestResult DoHTTPRequest(Session *sess) {
+enum RequestResult 
+DoHTTPRequest(Session *sess, unsigned long start, unsigned long end) {
 top:;
     rlrBuff rlrBuff = {0};
     Word tcpError;
     Boolean wantRedirect = FALSE, gotRedirect = FALSE;
     enum RequestResult result;
+    
+    UpdateRequestRange(sess, start, end);
     
     sess->responseCode = 0;
 

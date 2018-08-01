@@ -47,7 +47,6 @@ int main(int argc, char **argv) {
     if (argc > 2) {
         startByte = strtoul(argv[2], NULL, 0);
     }
-    UpdateRequestRange(&sess, startByte, startByte + 511);
 
     printf("Request:\n");
     printf("=========\n");
@@ -60,7 +59,8 @@ int main(int argc, char **argv) {
     printf("=========\n");
     printf("\n", i);
 
-    enum RequestResult requestResult = DoHTTPRequest(&sess);
+    enum RequestResult requestResult;
+    requestResult = DoHTTPRequest(&sess, startByte, startByte + 511);
     printf("RequestResult %i\n", requestResult);
     printf("Response code %lu\n", sess.responseCode);
 

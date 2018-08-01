@@ -18,7 +18,6 @@ enum RequestResult {
 };
 
 Boolean BuildHTTPRequest(Session *sess, char *resourceStr);
-void UpdateRequestRange(Session *sess, unsigned long start, unsigned long end);
-enum RequestResult DoHTTPRequest(Session *sess);
+enum RequestResult DoHTTPRequest(Session *sess, unsigned long start, unsigned long end);
 
 #endif
