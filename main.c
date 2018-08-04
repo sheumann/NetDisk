@@ -11,6 +11,7 @@
 #include "seturl.h"
 #include "hostname.h"
 #include "tcpconnection.h"
+#include "readtcp.h"
 
 /*
 http://archive.org/download/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg
@@ -20,6 +21,7 @@ http://ia800505.us.archive.org/16/items/a2gs_System_1.0_1986_Apple_FW/System_1.0
 
 char *defaultURL = "http://archive.org/download/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg";
 
+char buf[512];
 
 int main(int argc, char **argv) {
     TLStartUp();
@@ -71,6 +73,27 @@ int main(int argc, char **argv) {
         printf("totalLength   = %lu\n", sess.totalLength);
         printf("contentLength = %lu\n", sess.contentLength);
     }
+    
+    InitReadTCP(&sess, sess.rangeEnd - sess.rangeStart + 1, buf);
+    while (TryReadTCP(&sess) == rsWaiting)
+        /* keep reading */ ; 
+    
+    LongWord startTime = GetTick();
+    while (GetTick() - startTime < 70)
+        /* wait */ ;
+
+    printf("Request 2:\n");
+    requestResult = DoHTTPRequest(&sess, startByte + 512, startByte + 1023);
+    printf("RequestResult %i\n", requestResult);
+    printf("Response code %lu\n", sess.responseCode);
+
+    if (requestResult == REQUEST_SUCCESSFUL) {
+        printf("rangeStart    = %lu\n", sess.rangeStart);
+        printf("rangeEnd      = %lu\n", sess.rangeEnd);
+        printf("totalLength   = %lu\n", sess.totalLength);
+        printf("contentLength = %lu\n", sess.contentLength);
+    }
+
 
     EndTCPConnection(&sess);
 

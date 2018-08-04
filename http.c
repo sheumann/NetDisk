@@ -104,22 +104,21 @@ top:;
     /* Send out request */
     result = NETWORK_ERROR;
     unsigned int netErrors = 0;
-    do {
-        if (!sess->tcpLoggedIn || netErrors) {
-            if (StartTCPConnection(sess) != 0)
-                goto errorReturn;
+netRetry:
+    if (!sess->tcpLoggedIn || netErrors) {
+        if (StartTCPConnection(sess) != 0)
+            goto errorReturn;
+    }
+    tcpError = TCPIPWriteTCP(sess->ipid, sess->httpRequest,
+                             sess->httpRequestLen, TRUE, FALSE);
+    if (tcpError || toolerror()) {
+        if (netErrors == 0) {
+            netErrors++;
+            goto netRetry;
+        } else {
+            goto errorReturn;
         }
-        tcpError = TCPIPWriteTCP(sess->ipid, sess->httpRequest,
-                                 sess->httpRequestLen, TRUE, FALSE);
-        if (tcpError || toolerror()) {
-            if (netErrors == 0) {
-                netErrors++;
-                continue;
-            } else {
-                goto errorReturn;
-            }
-        }
-    } while (0);
+    }
     
     /* Get response status line & headers */
     LongWord startTime = GetTick();
@@ -129,8 +128,14 @@ top:;
                 (void*)((LongWord)"\p\r\n\r\n" | 0x80000000),
                 buffTypeNewHandle, (Ref)NULL,
                 0xFFFFFF, &rlrBuff);
-        if (tcpError || toolerror())
-            goto errorReturn;
+        if (tcpError || toolerror()) {
+            if (netErrors == 0) {
+                netErrors++;
+                goto netRetry;
+            } else {
+                goto errorReturn;
+            }
+        }
     } while (rlrBuff.rlrBuffCount == 0 
              && GetTick() - startTime < HTTP_RESPONSE_TIMEOUT * 60);
 
