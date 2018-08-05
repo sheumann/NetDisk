@@ -1,3 +1,5 @@
+#pragma noroot
+
 #include <types.h>
 #include <errno.h>
 #include <string.h>

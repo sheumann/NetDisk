@@ -1,3 +1,7 @@
+#ifdef __ORCAC__
+# pragma noroot
+#endif
+
 #include "urlparser.h"
 #include <string.h>
 

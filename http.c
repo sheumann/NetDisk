@@ -54,7 +54,7 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
         sizeNeeded = snprintf(sess->httpRequest, sizeNeeded, 
             "GET /%s HTTP/1.1\r\n"
             "Host: %s\r\n"
-            "User-Agent: GSRemoteDisk/0.1\r\n"
+            "User-Agent: GS-NetDisk/1.0a1\r\n"
             "Accept-Encoding: identity\r\n"
             //"Accept: */*\r\n" /* default, but some clients send explicitly */
             //"Connection: Keep-Alive\r\n" /* same */

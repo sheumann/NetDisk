@@ -1,3 +1,5 @@
+#pragma noroot
+
 #include <tcpip.h>
 #include <misctool.h>
 #include <orca.h>
