@@ -4,9 +4,13 @@
 #include <locator.h>
 #include <misctool.h>
 #include <tcpip.h>
+#include <memory.h>
 #include <orca.h>
+#include "driver.h"
+#include "installdriver.h"
+#include "version.h"
 
-const char bootInfoString[] = "NetDisk               v1.0a1";
+const char bootInfoString[] = "NetDisk               " BOOT_INFO_VERSION;
 
 Word *unloadFlagPtr;
 
@@ -16,14 +20,27 @@ static void setUnloadFlag(void) {
 }
 
 int main(void) {
+    for (int i = 1; i < 256; i++) {
+        UnloadOneTool(i); // event mgr
+    }
+
     /*
      * Load Marinetti.
      * We may get an error if the TCPIP init isn't loaded yet, but we ignore it.
      * The tool stub is still loaded in that case, which is enough for now.
      */
     LoadOneTool(54, 0x0200);
-    //if (toolerror() && toolerror() != terrINITNOTFOUND)
-    //    goto error;
+    if (toolerror() && toolerror() != terrINITNOTFOUND)
+        goto error;
+
+    /* Initialize the DIBs for our driver */
+    InitDIBs();
+
+    /* Install our driver */
+    if (InstallDriver() != 0) {
+        UnloadOneTool(54);
+        goto error;
+    }
 
     /* We're not going to error out, so show boot info. */
     ShowBootInfo(bootInfoString, NULL);
@@ -37,9 +54,7 @@ int main(void) {
      * yet when this init loads).
      */
     SetDefaultTPT();
-    
-    // TODO install driver
-    
+
     return;
     
 error:

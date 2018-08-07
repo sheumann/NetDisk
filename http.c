@@ -15,6 +15,7 @@
 #include "tcpconnection.h"
 #include "strcasecmp.h"
 #include "seturl.h"
+#include "version.h"
 
 #define buffTypePointer 0x0000      /* For TCPIPReadTCP() */
 #define buffTypeHandle 0x0001
@@ -54,7 +55,7 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
         sizeNeeded = snprintf(sess->httpRequest, sizeNeeded, 
             "GET /%s HTTP/1.1\r\n"
             "Host: %s\r\n"
-            "User-Agent: GS-NetDisk/1.0a1\r\n"
+            "User-Agent: GS-NetDisk/" USER_AGENT_VERSION "\r\n"
             "Accept-Encoding: identity\r\n"
             //"Accept: */*\r\n" /* default, but some clients send explicitly */
             //"Connection: Keep-Alive\r\n" /* same */
