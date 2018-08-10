@@ -10,6 +10,10 @@ struct DIBList dibList = {NDIBS};
 
 struct GSOSDP *gsosDP = (void*)0x00BD00;  /* GS/OS direct page ptr */
 
+static Word DoRead(struct GSOSDP *dp);
+static Word DoStatus(struct GSOSDP *dp);
+static Word DoEject(struct GSOSDP *dp);
+static Word DoShutdown(struct GSOSDP *dp);
 
 void InitDIBs(void) {
     for (unsigned i = 0; i < NDIBS; i++) {
@@ -51,7 +55,7 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
         break;
         
     case Driver_Read:
-        //TODO
+        retVal = DoRead(dp);
         break;
         
     case Driver_Write:
@@ -63,20 +67,7 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
     case Driver_Status:
         switch (dp->statusCode) {
         case Get_Device_Status:
-            if (dp->requestCount < 2) {
-                dp->transferCount = 0;
-                retVal = drvrBadParm;
-                break;
-            }
-            //TODO handle actual disk, and disk-switched logic
-            /* no disk in drive, ... */
-            ((DeviceStatusRec*)dp->statusListPtr)->statusWord = 0;
-            if (dp->requestCount < 6) {
-                dp->transferCount = 2;
-                break;
-            }
-            ((DeviceStatusRec*)dp->statusListPtr)->numBlocks = 0;
-            dp->requestCount = 6;
+            retVal = DoStatus(dp);
             break;
             
         case Get_Config_Parameters:
@@ -121,7 +112,7 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
     case Driver_Control:
         switch (dp->controlCode) {
         case eject:
-            //TODO
+            retVal = DoEject(dp);
             break;
             
         case setConfigParameters:
@@ -174,7 +165,7 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
         break;
     
     case Driver_Shutdown:
-        //TODO
+        retVal = DoShutdown(dp);
         break;
     
     default:
@@ -185,3 +176,36 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
     return retVal;
 }
 #pragma databank 0
+
+
+static Word DoRead(struct GSOSDP *dp) {
+    //TODO
+    return 0;
+}
+
+static Word DoStatus(struct GSOSDP *dp) {
+    if (dp->requestCount < 2) {
+        dp->transferCount = 0;
+        return drvrBadParm;
+    }
+    //TODO handle actual disk, and disk-switched logic
+    /* no disk in drive, ... */
+    ((DeviceStatusRec*)dp->statusListPtr)->statusWord = 0;
+    if (dp->requestCount < 6) {
+        dp->transferCount = 2;
+        return 0;
+    }
+    ((DeviceStatusRec*)dp->statusListPtr)->numBlocks = 0;
+    dp->requestCount = 6;
+    return 0;
+}
+
+static Word DoEject(struct GSOSDP *dp) {
+    //TODO
+    return 0;
+}
+
+static Word DoShutdown(struct GSOSDP *dp) {
+    //TODO
+    return 0;
+}
