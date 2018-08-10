@@ -47,6 +47,9 @@ typedef struct Session {
     LongWord desiredStart, desiredEnd;
     /* Expected length of disk image */
     LongWord expectedLength;
+    
+    /* Buffer for initial bytes of file (which may be a disk image header) */
+    unsigned char fileHeaderBuf[32];
 } Session;
 
 #endif

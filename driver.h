@@ -68,6 +68,9 @@ struct GSOSDP {
 #define Get_Format_Options    0x0003
 #define Get_Partition_Map     0x0004
 
+/* Custom Driver_Control subcall */
+#define Mount_URL 0x8080
+
 /* Status list record for Get_DeviceStatus */
 typedef struct DeviceStatusRec {
     Word statusWord;

@@ -3,6 +3,10 @@
 #include <gsos.h>
 #include "driver.h"
 #include "driverwrapper.h"
+#include "session.h"
+#include "seturl.h"
+#include "http.h"
+#include "readtcp.h"
 #include "version.h"
 
 struct DIB dibs[NDIBS] = {0};
@@ -10,6 +14,7 @@ struct DIBList dibList = {NDIBS};
 
 struct GSOSDP *gsosDP = (void*)0x00BD00;  /* GS/OS direct page ptr */
 
+static Word DoMountURL(struct GSOSDP *dp);
 static Word DoRead(struct GSOSDP *dp);
 static Word DoStatus(struct GSOSDP *dp);
 static Word DoEject(struct GSOSDP *dp);
@@ -152,6 +157,10 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
             dp->transferCount = 0;
             break;
             
+        case Mount_URL:
+            DoMountURL(dp);
+            break;
+        
         default:
             dp->transferCount = 0;
             retVal = drvrBadCode;
@@ -178,8 +187,73 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
 #pragma databank 0
 
 
+static Word DoMountURL(struct GSOSDP *dp) {
+    if (dp->dibPointer->extendedDIBPtr != NULL) {
+        dp->transferCount = 0;
+        return drvrBusy;
+    }
+
+    Session *sess = calloc(sizeof(*sess), 1);
+    if (sess == NULL) {
+        dp->transferCount = 0;
+        return drvrNoResrc;
+    }
+    dp->dibPointer->extendedDIBPtr = sess;
+    
+    enum SetURLResult setResult = SetURL(sess, (char*)dp->controlListPtr, TRUE, FALSE);
+    if (setResult != SETURL_SUCCESSFUL) {
+        // TODO arrange for more detailed error reporting
+        dp->transferCount = 0;
+        return drvrIOError;
+    }
+    
+    enum RequestResult requestResult = DoHTTPRequest(sess, 0, sizeof(sess->fileHeaderBuf) - 1);
+    if (requestResult != REQUEST_SUCCESSFUL) {
+        // TODO arrange for more detailed error reporting
+        dp->transferCount = 0;
+        return drvrIOError;
+    }
+    
+    InitReadTCP(sess, sizeof(sess->fileHeaderBuf), &sess->fileHeaderBuf);
+    while (TryReadTCP(sess) == rsWaiting)
+        // TODO timeout
+        /* keep reading */ ;
+    //TODO detect errors
+    
+    //TODO detect 2mg
+    
+    //TODO report disk switch
+    
+    return 0;
+}
+
 static Word DoRead(struct GSOSDP *dp) {
-    //TODO
+    Session *sess = dp->dibPointer->extendedDIBPtr;
+    if (sess == NULL) {
+        dp->transferCount = 0;
+        return drvrOffLine;
+    }
+
+    //TODO check size is multiple of a block
+    //TODO disk-switched logic
+    
+    unsigned long readStart = dp->blockNum * dp->blockSize;
+    unsigned long readEnd = readStart + dp->requestCount - 1;
+    
+    enum RequestResult requestResult = DoHTTPRequest(sess, readStart, readEnd);
+    if (requestResult != REQUEST_SUCCESSFUL) {
+        // TODO arrange for more detailed error reporting
+        dp->transferCount = 0;
+        return drvrIOError;
+    }
+    
+    InitReadTCP(sess, dp->requestCount, dp->bufferPtr);
+    while (TryReadTCP(sess) == rsWaiting)
+        // TODO timeout
+        /* keep reading */ ;
+    //TODO detect errors
+    
+    dp->transferCount = dp->requestCount - sess->readCount;
     return 0;
 }
 
@@ -190,7 +264,11 @@ static Word DoStatus(struct GSOSDP *dp) {
     }
     //TODO handle actual disk, and disk-switched logic
     /* no disk in drive, ... */
-    ((DeviceStatusRec*)dp->statusListPtr)->statusWord = 0;
+    if (dp->dibPointer->extendedDIBPtr != NULL) {
+        ((DeviceStatusRec*)dp->statusListPtr)->statusWord = 0x8014;
+    } else {
+        ((DeviceStatusRec*)dp->statusListPtr)->statusWord = 0;
+    }
     if (dp->requestCount < 6) {
         dp->transferCount = 2;
         return 0;
