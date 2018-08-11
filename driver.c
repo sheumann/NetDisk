@@ -7,7 +7,10 @@
 #include "seturl.h"
 #include "http.h"
 #include "readtcp.h"
+#include "asmglue.h"
 #include "version.h"
+
+#define TWO_IMG_MAGIC ('2' | 'I'<<8 | (LongWord)'M'<<16 | (LongWord)'G'<<24)
 
 struct DIB dibs[NDIBS] = {0};
 struct DIBList dibList = {NDIBS};
@@ -47,6 +50,7 @@ void InitDIBs(void) {
 
 #pragma databank 1
 Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
+    Word stateReg = ForceRomIn();
     Word retVal = 0;
 
     switch (callNum) {
@@ -182,10 +186,23 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
         break;
     }
 
+    RestoreStateReg(stateReg);
     return retVal;
 }
 #pragma databank 0
 
+
+static Word CheckTwoImg(Session *sess) {
+    struct TwoImgHeader *hdr = &sess->fileHeader.twoImgHeader;
+    if (hdr->twoImgID != TWO_IMG_MAGIC)
+        return 0;
+
+    // TODO more checks
+    
+    sess->dataOffset = hdr->dataOffset;
+
+    return 0;
+}
 
 static Word DoMountURL(struct GSOSDP *dp) {
     if (dp->dibPointer->extendedDIBPtr != NULL) {
@@ -207,20 +224,23 @@ static Word DoMountURL(struct GSOSDP *dp) {
         return drvrIOError;
     }
     
-    enum RequestResult requestResult = DoHTTPRequest(sess, 0, sizeof(sess->fileHeaderBuf) - 1);
+    enum RequestResult requestResult = DoHTTPRequest(sess, 0, sizeof(sess->fileHeader) - 1);
     if (requestResult != REQUEST_SUCCESSFUL) {
         // TODO arrange for more detailed error reporting
         dp->transferCount = 0;
         return drvrIOError;
     }
     
-    InitReadTCP(sess, sizeof(sess->fileHeaderBuf), &sess->fileHeaderBuf);
+    InitReadTCP(sess, sizeof(sess->fileHeader.buf), &sess->fileHeader.buf);
     while (TryReadTCP(sess) == rsWaiting)
         // TODO timeout
         /* keep reading */ ;
     //TODO detect errors
     
-    //TODO detect 2mg
+    Word checkResult = CheckTwoImg(sess);
+    if (checkResult != 0) {
+        // TODO error
+    }
     
     //TODO report disk switch
     
@@ -237,7 +257,7 @@ static Word DoRead(struct GSOSDP *dp) {
     //TODO check size is multiple of a block
     //TODO disk-switched logic
     
-    unsigned long readStart = dp->blockNum * dp->blockSize;
+    unsigned long readStart = dp->blockNum * dp->blockSize + sess->dataOffset;
     unsigned long readEnd = readStart + dp->requestCount - 1;
     
     enum RequestResult requestResult = DoHTTPRequest(sess, readStart, readEnd);

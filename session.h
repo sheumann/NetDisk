@@ -3,6 +3,18 @@
 
 #include <types.h>
 
+struct TwoImgHeader {
+    LongWord twoImgID;
+    LongWord appTag;
+    Word headerLength;
+    Word version;
+    LongWord imgFormat;
+    LongWord flag;
+    LongWord nBlocks;
+    LongWord dataOffset;
+    LongWord dataLength;
+};
+
 typedef struct Session {
     /* Marinetti TCP connection status */
     Word ipid;
@@ -48,8 +60,14 @@ typedef struct Session {
     /* Expected length of disk image */
     LongWord expectedLength;
     
+    /* Offset of disk image blocks within file */
+    LongWord dataOffset;
+    
     /* Buffer for initial bytes of file (which may be a disk image header) */
-    unsigned char fileHeaderBuf[32];
+    union {
+        unsigned char buf[32];
+        struct TwoImgHeader twoImgHeader;
+    } fileHeader;
 } Session;
 
 #endif
