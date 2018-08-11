@@ -7,6 +7,7 @@
 #include "seturl.h"
 #include "http.h"
 #include "readtcp.h"
+#include "tcpconnection.h"
 #include "asmglue.h"
 #include "version.h"
 
@@ -215,11 +216,11 @@ static Word DoMountURL(struct GSOSDP *dp) {
         dp->transferCount = 0;
         return drvrNoResrc;
     }
-    dp->dibPointer->extendedDIBPtr = sess;
     
     enum SetURLResult setResult = SetURL(sess, (char*)dp->controlListPtr, TRUE, FALSE);
     if (setResult != SETURL_SUCCESSFUL) {
         // TODO arrange for more detailed error reporting
+        EndNetDiskSession(sess);
         dp->transferCount = 0;
         return drvrIOError;
     }
@@ -227,6 +228,7 @@ static Word DoMountURL(struct GSOSDP *dp) {
     enum RequestResult requestResult = DoHTTPRequest(sess, 0, sizeof(sess->fileHeader) - 1);
     if (requestResult != REQUEST_SUCCESSFUL) {
         // TODO arrange for more detailed error reporting
+        EndNetDiskSession(sess);
         dp->transferCount = 0;
         return drvrIOError;
     }
@@ -239,8 +241,11 @@ static Word DoMountURL(struct GSOSDP *dp) {
     
     Word checkResult = CheckTwoImg(sess);
     if (checkResult != 0) {
+        EndNetDiskSession(sess);
         // TODO error
     }
+    
+    dp->dibPointer->extendedDIBPtr = sess;
     
     //TODO report disk switch
     
@@ -299,11 +304,16 @@ static Word DoStatus(struct GSOSDP *dp) {
 }
 
 static Word DoEject(struct GSOSDP *dp) {
-    //TODO
+    EndNetDiskSession(dp->dibPointer->extendedDIBPtr);
+    dp->dibPointer->extendedDIBPtr = NULL;
+    
+    dp->transferCount = 0;
     return 0;
 }
 
 static Word DoShutdown(struct GSOSDP *dp) {
-    //TODO
+    EndNetDiskSession(dp->dibPointer->extendedDIBPtr);
+    dp->dibPointer->extendedDIBPtr = NULL;
+    //TODO should return error unless all of our other DIBs are already shut down?
     return 0;
 }

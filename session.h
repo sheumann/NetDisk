@@ -70,4 +70,7 @@ typedef struct Session {
     } fileHeader;
 } Session;
 
+
+void EndNetDiskSession(Session *sess);
+
 #endif
