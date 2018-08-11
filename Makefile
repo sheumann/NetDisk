@@ -11,13 +11,13 @@ NETDISKINIT_OBJS = initstart.a netdiskinit.a hostname.a http.a readtcp.a seturl.
 # NETDISKINIT_RSRC = 
 NETDISKINIT_PROG = NetDiskInit
 
-# NETDISKCDEV_OBJS = 
-# NETDISKCDEV_RSRC = 
-# NETDISKCDEV_CDEV = 
+NETDISKCDEV_OBJS = cdev.a cdevutil.a
+NETDISKCDEV_RSRC = cdev.rez
+NETDISKCDEV_CDEV = NetDisk
 
 MACROS = asmglue.macros
 
-PROGS = $(HTTPTEST_PROG) $(NETDISKINIT_PROG) $(MOUNTURL_PROG)
+PROGS = $(HTTPTEST_PROG) $(NETDISKINIT_PROG) $(MOUNTURL_PROG) $(NETDISKCDEV_CDEV)
 
 .PHONY: default
 default: $(PROGS)
@@ -31,6 +31,13 @@ $(MOUNTURL_PROG): $(MOUNTURL_OBJS)
 $(NETDISKINIT_PROG): $(NETDISKINIT_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 	iix chtyp -tpif $@
+
+cdev.obj: $(NETDISKCDEV_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(NETDISKCDEV_CDEV): cdev.obj $(NETDISKCDEV_RSRC)
+	occ $(NETDISKCDEV_RSRC) -o $@
+	iix chtyp -tcdv $@
 
 %.macros: %.asm
 	iix macgen $< $@ 13/ORCAInclude/m16.= < /dev/null > /dev/null
