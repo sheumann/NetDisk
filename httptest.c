@@ -39,9 +39,9 @@ int main(int argc, char **argv) {
 
     char *url = (argc > 1) ? argv[1] : defaultURL;
     
-    enum SetURLResult result = SetURL(&sess, url, TRUE, FALSE);
+    enum NetDiskError result = SetURL(&sess, url, TRUE, FALSE);
 
-    if (result != SETURL_SUCCESSFUL) {
+    if (result != OPERATION_SUCCESSFUL) {
         printf("SetURL error %i\n", (int)result);
         goto exit;
     }
@@ -62,12 +62,12 @@ int main(int argc, char **argv) {
     printf("=========\n");
     printf("\n");
 
-    enum RequestResult requestResult;
+    enum NetDiskError requestResult;
     requestResult = DoHTTPRequest(&sess, startByte, startByte + 511);
     printf("RequestResult %i\n", requestResult);
     printf("Response code %lu\n", sess.responseCode);
 
-    if (requestResult == REQUEST_SUCCESSFUL) {
+    if (requestResult == OPERATION_SUCCESSFUL) {
         printf("rangeStart    = %lu\n", sess.rangeStart);
         printf("rangeEnd      = %lu\n", sess.rangeEnd);
         printf("totalLength   = %lu\n", sess.totalLength);
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     printf("RequestResult %i\n", requestResult);
     printf("Response code %lu\n", sess.responseCode);
 
-    if (requestResult == REQUEST_SUCCESSFUL) {
+    if (requestResult == OPERATION_SUCCESSFUL) {
         printf("rangeStart    = %lu\n", sess.rangeStart);
         printf("rangeEnd      = %lu\n", sess.rangeEnd);
         printf("totalLength   = %lu\n", sess.totalLength);

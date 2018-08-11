@@ -18,7 +18,7 @@
 #define MAX_URL_LENGTH 30000
 
 
-enum SetURLResult
+enum NetDiskError
 SetURL(Session *sess, char *url, Boolean permissive, Boolean partialOK) {
     if (strlen(url) > MAX_URL_LENGTH) {
         return URL_TOO_LONG;
@@ -95,5 +95,5 @@ SetURL(Session *sess, char *url, Boolean permissive, Boolean partialOK) {
     /* End any existing TCP connection to old URL */
     EndTCPConnection(sess);
     
-    return SETURL_SUCCESSFUL;
+    return OPERATION_SUCCESSFUL;
 }

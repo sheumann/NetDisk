@@ -2,8 +2,9 @@
 #define TCPCONNECTION_H
 
 #include "session.h"
+#include "netdiskerror.h"
 
-Word StartTCPConnection(Session *sess);
+enum NetDiskError StartTCPConnection(Session *sess);
 void EndTCPConnection(Session *sess);
 
 #endif

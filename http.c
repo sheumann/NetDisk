@@ -90,13 +90,13 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
     return TRUE;
 }
 
-enum RequestResult 
+enum NetDiskError 
 DoHTTPRequest(Session *sess, unsigned long start, unsigned long end) {
 top:;
     rlrBuff rlrBuff = {0};
     Word tcpError;
     Boolean wantRedirect = FALSE, gotRedirect = FALSE;
-    enum RequestResult result;
+    enum NetDiskError result;
     
     UpdateRequestRange(sess, start, end);
     
@@ -300,7 +300,7 @@ netRetry:
                 goto errorReturn;
             if (wantRedirect) {
                 *endPtr = '\0';
-                if (SetURL(sess, response, FALSE, TRUE) != SETURL_SUCCESSFUL) {
+                if (SetURL(sess, response, FALSE, TRUE) != OPERATION_SUCCESSFUL) {
                     result = REDIRECT_ERROR;
                     goto errorReturn;
                 }
@@ -354,7 +354,7 @@ netRetry:
         && sess->contentLength != (sess->desiredEnd - sess->desiredStart + 1))
         goto errorReturn;
 
-    result = REQUEST_SUCCESSFUL;
+    result = OPERATION_SUCCESSFUL;
     DisposeHandle(rlrBuff.rlrBuffHandle);
     return result;
     

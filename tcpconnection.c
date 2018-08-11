@@ -15,7 +15,7 @@
  * On success, returns 0 and sets sess->ipid.
  * On failure, returns an error code.
  */
-Word StartTCPConnection(Session *sess) {
+enum NetDiskError StartTCPConnection(Session *sess) {
     Word tcperr;
     srBuff mySRBuff;
     LongWord initialTime;
@@ -26,15 +26,15 @@ Word StartTCPConnection(Session *sess) {
     sess->ipid = 
         TCPIPLogin(userid(), sess->ipAddr, sess->port, 0, 0x40);
     if (toolerror())
-        return NETWORK_ERR;
+        return NETWORK_ERROR;
     
     tcperr = TCPIPOpenTCP(sess->ipid);
     if (toolerror()) {
         TCPIPLogout(sess->ipid);
-        return NETWORK_ERR;
+        return NETWORK_ERROR;
     } else if (tcperr != tcperrOK) {
         TCPIPLogout(sess->ipid);
-        return NO_RESP_ERR;
+        return NO_RESPONSE;
     }
     
     initialTime = GetTick();
@@ -45,7 +45,7 @@ Word StartTCPConnection(Session *sess) {
     if (mySRBuff.srState != TCPSESTABLISHED) {
         TCPIPAbortTCP(sess->ipid);
         TCPIPLogout(sess->ipid);
-        return NO_RESP_ERR;
+        return NO_RESPONSE;
     }
     
     sess->tcpLoggedIn = TRUE;

@@ -11,7 +11,7 @@
 #include "asmglue.h"
 #include "version.h"
 
-#define TWO_IMG_MAGIC ('2' | 'I'<<8 | (LongWord)'M'<<16 | (LongWord)'G'<<24)
+#define BLOCK_SIZE 512
 
 struct DIB dibs[NDIBS] = {0};
 struct DIBList dibList = {NDIBS};
@@ -192,20 +192,36 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
 }
 #pragma databank 0
 
-
-static Word CheckTwoImg(Session *sess) {
+/*
+ * Check for a 2IMG file, and process its header if one is found.
+ * Returns a non-zero error code for an invalid or unsupported 2IMG file, 
+ * OPERATION_SUCCESSFUL otherwise (whether it's a 2IMG file or not).
+ */
+static enum NetDiskError CheckTwoImg(Session *sess) {
     struct TwoImgHeader *hdr = &sess->fileHeader.twoImgHeader;
+    
+    /* Check if it's a 2IMG file */
     if (hdr->twoImgID != TWO_IMG_MAGIC)
-        return 0;
+        return OPERATION_SUCCESSFUL;
+
+    /* It's a 2IMG file, but is it one we can handle? */
+    if (hdr->version > 1)
+        return UNSUPPORTED_2IMG_FILE;
+    if (hdr->imgFormat != IMAGE_FORMAT_PRODOS_ORDER)
+        return UNSUPPORTED_2IMG_FILE;
+    if (hdr->dataLength % BLOCK_SIZE != 0)
+        return UNSUPPORTED_2IMG_FILE;
 
     // TODO more checks
     
     sess->dataOffset = hdr->dataOffset;
 
-    return 0;
+    return OPERATION_SUCCESSFUL;
 }
 
 static Word DoMountURL(struct GSOSDP *dp) {
+    enum NetDiskError err;
+
     if (dp->dibPointer->extendedDIBPtr != NULL) {
         dp->transferCount = 0;
         return drvrBusy;
@@ -217,16 +233,16 @@ static Word DoMountURL(struct GSOSDP *dp) {
         return drvrNoResrc;
     }
     
-    enum SetURLResult setResult = SetURL(sess, (char*)dp->controlListPtr, TRUE, FALSE);
-    if (setResult != SETURL_SUCCESSFUL) {
+    err = SetURL(sess, (char*)dp->controlListPtr, TRUE, FALSE);
+    if (err != OPERATION_SUCCESSFUL) {
         // TODO arrange for more detailed error reporting
         EndNetDiskSession(sess);
         dp->transferCount = 0;
         return drvrIOError;
     }
     
-    enum RequestResult requestResult = DoHTTPRequest(sess, 0, sizeof(sess->fileHeader) - 1);
-    if (requestResult != REQUEST_SUCCESSFUL) {
+    err = DoHTTPRequest(sess, 0, sizeof(sess->fileHeader) - 1);
+    if (err != OPERATION_SUCCESSFUL) {
         // TODO arrange for more detailed error reporting
         EndNetDiskSession(sess);
         dp->transferCount = 0;
@@ -239,8 +255,8 @@ static Word DoMountURL(struct GSOSDP *dp) {
         /* keep reading */ ;
     //TODO detect errors
     
-    Word checkResult = CheckTwoImg(sess);
-    if (checkResult != 0) {
+    err = CheckTwoImg(sess);
+    if (err != OPERATION_SUCCESSFUL) {
         EndNetDiskSession(sess);
         // TODO error
     }
@@ -265,8 +281,8 @@ static Word DoRead(struct GSOSDP *dp) {
     unsigned long readStart = dp->blockNum * dp->blockSize + sess->dataOffset;
     unsigned long readEnd = readStart + dp->requestCount - 1;
     
-    enum RequestResult requestResult = DoHTTPRequest(sess, readStart, readEnd);
-    if (requestResult != REQUEST_SUCCESSFUL) {
+    enum NetDiskError err = DoHTTPRequest(sess, readStart, readEnd);
+    if (err != OPERATION_SUCCESSFUL) {
         // TODO arrange for more detailed error reporting
         dp->transferCount = 0;
         return drvrIOError;

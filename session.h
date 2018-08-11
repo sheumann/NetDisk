@@ -2,18 +2,7 @@
 #define SESSION_H
 
 #include <types.h>
-
-struct TwoImgHeader {
-    LongWord twoImgID;
-    LongWord appTag;
-    Word headerLength;
-    Word version;
-    LongWord imgFormat;
-    LongWord flag;
-    LongWord nBlocks;
-    LongWord dataOffset;
-    LongWord dataLength;
-};
+#include "twoimg.h"
 
 typedef struct Session {
     /* Marinetti TCP connection status */
