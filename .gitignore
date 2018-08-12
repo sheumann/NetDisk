@@ -3,3 +3,9 @@
 *.o
 gs.out
 a.out
+*.macros
+httptest
+mounturl
+NetDiskInit
+NetDisk
+*.obj
