@@ -3,9 +3,12 @@
 
 enum NetDiskError {
     OPERATION_SUCCESSFUL = 0,
+    
+    DISK_ALREADY_MOUNTED = 100,
+    OUT_OF_MEMORY,
 
     /* SetURL errors */
-    URL_TOO_LONG = 100,
+    URL_TOO_LONG = 200,
     INVALID_CHARACTER_IN_URL,
     BAD_URL_SYNTAX,
     UNSUPPORTED_URL_SCHEME,
@@ -16,10 +19,9 @@ enum NetDiskError {
     IPV6_NOT_SUPPORTED,
     HOSTNAME_TOO_LONG,
     NAME_LOOKUP_FAILED,
-    OUT_OF_MEMORY,
     
     /* StartTCPConnection and DoHTTPRequest errors */
-    NETWORK_ERROR = 200,
+    NETWORK_ERROR = 300,
     NO_RESPONSE,
     INVALID_RESPONSE,
     EXCESSIVE_REDIRECTS,
@@ -29,8 +31,11 @@ enum NetDiskError {
     NOT_DESIRED_CONTENT,
     DIFFERENT_LENGTH, /* Might be considered successful later */
     
+    /* Error values of 4xx and 5xx mean we got the corresponding HTTP error */
+    HTTP_ERROR = 400,
+    
     /* File format errors */
-    UNSUPPORTED_2IMG_FILE = 300,
+    UNSUPPORTED_2IMG_FILE = 600,
     
 };
 

@@ -206,7 +206,11 @@ netRetry:
         }
               
     default:
-        result = UNSUPPORTED_RESPONSE;
+        if (sess->responseCode < 400 || sess->responseCode > 599) {
+            result = UNSUPPORTED_RESPONSE;
+        } else {
+            result = sess->responseCode;
+        }
         goto errorReturn;
     }
 

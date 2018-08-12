@@ -9,6 +9,7 @@
 #include "readtcp.h"
 #include "tcpconnection.h"
 #include "asmglue.h"
+#include "mounturl.h"
 #include "version.h"
 
 #define BLOCK_SIZE 512
@@ -221,23 +222,33 @@ static enum NetDiskError CheckTwoImg(Session *sess) {
 
 static Word DoMountURL(struct GSOSDP *dp) {
     enum NetDiskError err;
+    struct MountURLRec *mountURLRec = (struct MountURLRec *)dp->controlListPtr;
+
+    if (mountURLRec->byteCount != sizeof(struct MountURLRec)
+        || mountURLRec->byteCount != dp->requestCount)
+    {
+        dp->transferCount = 0;
+        return drvrBadParm;
+    }
 
     if (dp->dibPointer->extendedDIBPtr != NULL) {
         dp->transferCount = 0;
+        mountURLRec->result = DISK_ALREADY_MOUNTED;
         return drvrBusy;
     }
 
     Session *sess = calloc(sizeof(*sess), 1);
     if (sess == NULL) {
         dp->transferCount = 0;
+        mountURLRec->result = OUT_OF_MEMORY;
         return drvrNoResrc;
     }
     
-    err = SetURL(sess, (char*)dp->controlListPtr, TRUE, FALSE);
+    err = SetURL(sess, mountURLRec->url, TRUE, FALSE);
     if (err != OPERATION_SUCCESSFUL) {
-        // TODO arrange for more detailed error reporting
         EndNetDiskSession(sess);
         dp->transferCount = 0;
+        mountURLRec->result = err;
         return drvrIOError;
     }
     
@@ -246,6 +257,7 @@ static Word DoMountURL(struct GSOSDP *dp) {
         // TODO arrange for more detailed error reporting
         EndNetDiskSession(sess);
         dp->transferCount = 0;
+        mountURLRec->result = err;
         return drvrIOError;
     }
     
@@ -258,8 +270,8 @@ static Word DoMountURL(struct GSOSDP *dp) {
     err = CheckTwoImg(sess);
     if (err != OPERATION_SUCCESSFUL) {
         EndNetDiskSession(sess);
-        // TODO better error
         dp->transferCount = 0;
+        mountURLRec->result = err;
         return drvrIOError;
     }
     
@@ -267,6 +279,7 @@ static Word DoMountURL(struct GSOSDP *dp) {
     
     //TODO report disk switch
     
+    mountURLRec->result = OPERATION_SUCCESSFUL;
     return 0;
 }
 
