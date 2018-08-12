@@ -258,7 +258,9 @@ static Word DoMountURL(struct GSOSDP *dp) {
     err = CheckTwoImg(sess);
     if (err != OPERATION_SUCCESSFUL) {
         EndNetDiskSession(sess);
-        // TODO error
+        // TODO better error
+        dp->transferCount = 0;
+        return drvrIOError;
     }
     
     dp->dibPointer->extendedDIBPtr = sess;
@@ -328,8 +330,18 @@ static Word DoEject(struct GSOSDP *dp) {
 }
 
 static Word DoShutdown(struct GSOSDP *dp) {
-    EndNetDiskSession(dp->dibPointer->extendedDIBPtr);
-    dp->dibPointer->extendedDIBPtr = NULL;
-    //TODO should return error unless all of our other DIBs are already shut down?
-    return 0;
+    /*
+     * We don't actually end the session here, because this may just be
+     * a switch to P8.  If so, this driver won't work within P8, but if we
+     * leave things in place it should work again once we're back in GS/OS.
+     * Do end the current TCP connection, since it would probably time out.
+     */
+    EndTCPConnection(dp->dibPointer->extendedDIBPtr);
+    
+    /*
+     * Return error to indicate we shouldn't be purged.
+     * (I don't think we would be anyhow, since this isn't an
+     * actual device driver file, but let's do this to be safe.)
+     */
+    return drvrIOError;
 }
