@@ -255,3 +255,15 @@ resource rTextForLETextBox2 (helpWindow+helpTxt) {
     "hosted on HTTP servers.\n"
 };
 
+
+/*
+ * Error messages
+ */
+
+#define mountURLError 3000
+
+resource rAlertString (mountURLError) {
+    "32:"
+    "MountURL error *0."
+    ":^#0\$00"
+};

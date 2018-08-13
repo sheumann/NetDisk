@@ -2,13 +2,17 @@
 
 #include <types.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <gsos.h>
 #include <orca.h>
 #include <quickdraw.h>
+#include <qdaux.h>
 #include <window.h>
 #include <control.h>
 #include <lineedit.h>
 #include <desk.h>
+#include <locator.h>
+#include "mounturl.h"
 
 #define MachineCDEV     1
 #define BootCDEV        2
@@ -28,17 +32,39 @@
 //#define optionsPopUp      6
 //#define trianglePic       7
 
+#define mountURLError 3000
+
 extern void FreeAllCDevMem(void);
 
 char urlBuf[257];
 
 WindowPtr wPtr = NULL;
 
+struct MountURLRec mountURLRec = {sizeof(struct MountURLRec)};
+
 void DoMount(void)
 {
+    char numStr[6] = "";
+    char *subs[1] = {numStr};
+
+    WaitCursor();
+
     GetLETextByID(wPtr, urlLine, (StringPtr)&urlBuf);
 
-    //TODO
+    mountURLRec.result = NETDISK_NOT_PRESENT;
+    mountURLRec.url = urlBuf + 1;
+
+    SendRequest(MountURL, sendToName|stopAfterOne, (Long)NETDISK_REQUEST_NAME,
+                (Long)&mountURLRec, NULL);
+
+    InitCursor();
+
+    if (mountURLRec.result != OPERATION_SUCCESSFUL) {
+        //TODO better error messages
+        snprintf(numStr, sizeof(numStr), "%u", mountURLRec.result);
+        AlertWindow(awResource+awCString+awButtonLayout, (Pointer)subs,
+                    mountURLError);
+    }
 }
 
 void DoHit(long ctlID, CtlRecHndl ctlHandle)
