@@ -327,8 +327,8 @@ static Word DoRead(struct GSOSDP *dp) {
     return 0;
 }
 
+/* This implements the Get_Device_Status subcall of Driver_Status */
 static Word DoStatus(struct GSOSDP *dp) {
-    Session *sess = dp->dibPointer->extendedDIBPtr;
     DeviceStatusRec *dsRec = (DeviceStatusRec*)dp->statusListPtr;
 
     if (dp->requestCount < 2) {
@@ -336,7 +336,7 @@ static Word DoStatus(struct GSOSDP *dp) {
         return drvrBadParm;
     }
     //TODO disk-switched logic
-    if (sess != NULL) {
+    if (dp->dibPointer->extendedDIBPtr != NULL) {
         dsRec->statusWord = 0x0014;
     } else {
         dsRec->statusWord = 0;
@@ -349,7 +349,7 @@ static Word DoStatus(struct GSOSDP *dp) {
     if (dsRec->numBlocks == 0) {
         dsRec->statusWord |= 0x8000;
     }
-    dp->requestCount = 6;
+    dp->transferCount = 6;
     return 0;
 }
 
