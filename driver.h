@@ -3,7 +3,7 @@
 
 #include <types.h>
 
-#define DEVICE_GENERIC_FLOPPY_DRIVE 0x0013
+#define DEVICE_MFM_DRIVE 0x0017  /* This is the ID used for FDHD SuperDrives */
 
 #define NDIBS 16
 

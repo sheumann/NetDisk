@@ -42,7 +42,7 @@ void InitDIBs(void) {
         dibs[i].slotNum = 0x8003;
         dibs[i].unitNum = i+1;
         dibs[i].version = DRIVER_VERSION;
-        dibs[i].deviceID = DEVICE_GENERIC_FLOPPY_DRIVE;
+        dibs[i].deviceID = DEVICE_MFM_DRIVE;
         
         dibList.dibPointers[i] = &dibs[i];
     }
