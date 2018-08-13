@@ -10,6 +10,7 @@
 #include "driver.h"
 #include "installdriver.h"
 #include "asmglue.h"
+#include "mounturl.h"
 #include "version.h"
 
 const char bootInfoString[] = "NetDisk               " BOOT_INFO_VERSION;
@@ -30,6 +31,7 @@ static struct NotificationProcRec {
 #define NOTIFY_GSOS_SWITCH 0x04
 
 static void notificationProc(void);
+static pascal Word mountRequestProc(Word reqCode, void *dataIn, void *dataOut);
 
 #define JML 0x5C
 
@@ -78,6 +80,9 @@ int main(void) {
      * yet when this init loads).
      */
     SetDefaultTPT();
+    
+    /* Accept requests to mount URLs */
+    AcceptRequests(NETDISK_REQUEST_NAME, userid(), &mountRequestProc);
 
     return;
     
@@ -104,3 +109,39 @@ static void notificationProc(void) {
 }
 #pragma databank 0
 
+static void doMountURL(struct MountURLRec *mountURLRec) {
+    DAccessRecGS controlRec = {5};
+    controlRec.code = MountURL;
+    controlRec.list = (pointer)mountURLRec;
+    controlRec.requestCount = mountURLRec->byteCount;
+
+    for (unsigned i = 0; i < NDIBS; i++) {
+        Word devNum = dibs[i].DIBDevNum;
+        if (devNum == 0)
+            continue;
+    
+        controlRec.devNum = devNum;
+        DControl(&controlRec);
+        
+        if (mountURLRec->result != DISK_ALREADY_MOUNTED)
+            return;
+    }
+    
+    mountURLRec->result = NO_DIBS_AVAILABLE;
+}
+
+/*
+ * Request procedure called to mount a disk image by URL.
+ */
+#pragma databank 1
+#pragma toolparms 1
+static pascal Word mountRequestProc(Word reqCode, void *dataIn, void *dataOut) {
+    if (reqCode == MountURL) {
+        doMountURL((struct MountURLRec *) dataIn);
+        return 0x8000;
+    }
+    
+    return 0;
+}
+#pragma toolparms 0
+#pragma databank 0

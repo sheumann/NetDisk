@@ -4,7 +4,9 @@
 enum NetDiskError {
     OPERATION_SUCCESSFUL = 0,
     
-    DISK_ALREADY_MOUNTED = 100,
+    NETDISK_NOT_PRESENT = 100,
+    DISK_ALREADY_MOUNTED,
+    NO_DIBS_AVAILABLE,
     OUT_OF_MEMORY,
 
     /* SetURL errors */
