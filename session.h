@@ -51,6 +51,8 @@ typedef struct Session {
     
     /* Offset of disk image blocks within file */
     LongWord dataOffset;
+    /* Length of disk image data */
+    LongWord dataLength;
     
     /* Buffer for initial bytes of file (which may be a disk image header) */
     union {

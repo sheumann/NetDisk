@@ -212,10 +212,14 @@ static enum NetDiskError CheckTwoImg(Session *sess) {
         return UNSUPPORTED_2IMG_FILE;
     if (hdr->dataLength % BLOCK_SIZE != 0)
         return UNSUPPORTED_2IMG_FILE;
-
-    // TODO more checks
     
     sess->dataOffset = hdr->dataOffset;
+    sess->dataLength = hdr->dataLength;
+    
+    /* Sweet16 apparently may generate images with erroneous dataLength of 0 */
+    if (hdr->dataLength == 0) {
+        sess->dataLength = hdr->nBlocks * BLOCK_SIZE;
+    }
 
     return OPERATION_SUCCESSFUL;
 }
@@ -254,7 +258,6 @@ static Word DoMountURL(struct GSOSDP *dp) {
     
     err = DoHTTPRequest(sess, 0, sizeof(sess->fileHeader) - 1);
     if (err != OPERATION_SUCCESSFUL) {
-        // TODO arrange for more detailed error reporting
         EndNetDiskSession(sess);
         dp->transferCount = 0;
         mountURLRec->result = err;
@@ -274,6 +277,18 @@ static Word DoMountURL(struct GSOSDP *dp) {
         mountURLRec->result = err;
         return drvrIOError;
     }
+    
+    if (sess->dataOffset == 0) {
+        /* No encapsulating disk image - treat this as raw blocks */
+        sess->dataLength = sess->totalLength;
+    }
+    
+    if (sess->dataLength % BLOCK_SIZE != 0) {
+        dp->transferCount = 0;
+        mountURLRec->result = NOT_MULTIPLE_OF_BLOCK_SIZE;
+        return drvrIOError;
+    }
+    dp->dibPointer->blockCount = sess->dataLength / BLOCK_SIZE;
     
     dp->dibPointer->extendedDIBPtr = sess;
     
@@ -298,7 +313,6 @@ static Word DoRead(struct GSOSDP *dp) {
     
     enum NetDiskError err = DoHTTPRequest(sess, readStart, readEnd);
     if (err != OPERATION_SUCCESSFUL) {
-        // TODO arrange for more detailed error reporting
         dp->transferCount = 0;
         return drvrIOError;
     }
@@ -314,22 +328,27 @@ static Word DoRead(struct GSOSDP *dp) {
 }
 
 static Word DoStatus(struct GSOSDP *dp) {
+    Session *sess = dp->dibPointer->extendedDIBPtr;
+    DeviceStatusRec *dsRec = (DeviceStatusRec*)dp->statusListPtr;
+
     if (dp->requestCount < 2) {
         dp->transferCount = 0;
         return drvrBadParm;
     }
-    //TODO handle actual disk, and disk-switched logic
-    /* no disk in drive, ... */
-    if (dp->dibPointer->extendedDIBPtr != NULL) {
-        ((DeviceStatusRec*)dp->statusListPtr)->statusWord = 0x8014;
+    //TODO disk-switched logic
+    if (sess != NULL) {
+        dsRec->statusWord = 0x0014;
     } else {
-        ((DeviceStatusRec*)dp->statusListPtr)->statusWord = 0;
+        dsRec->statusWord = 0;
     }
     if (dp->requestCount < 6) {
         dp->transferCount = 2;
         return 0;
     }
-    ((DeviceStatusRec*)dp->statusListPtr)->numBlocks = 0;
+    dsRec->numBlocks = dp->dibPointer->blockCount;
+    if (dsRec->numBlocks == 0) {
+        dsRec->statusWord |= 0x8000;
+    }
     dp->requestCount = 6;
     return 0;
 }
@@ -337,6 +356,7 @@ static Word DoStatus(struct GSOSDP *dp) {
 static Word DoEject(struct GSOSDP *dp) {
     EndNetDiskSession(dp->dibPointer->extendedDIBPtr);
     dp->dibPointer->extendedDIBPtr = NULL;
+    dp->dibPointer->blockCount = 0;
     
     dp->transferCount = 0;
     return 0;
