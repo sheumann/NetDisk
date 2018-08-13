@@ -64,6 +64,13 @@ void DoMount(void)
         snprintf(numStr, sizeof(numStr), "%u", mountURLRec.result);
         AlertWindow(awResource+awCString+awButtonLayout, (Pointer)subs,
                     mountURLError);
+        
+        /* Work around issue where parts of LE caret may flash out of sync */
+        CtlRecHndl ctl = GetCtlHandleFromID(wPtr, urlLine);
+        LEDeactivate((LERecHndl) GetCtlTitle(ctl));
+        if (FindTargetCtl() == ctl) {
+            LEActivate((LERecHndl) GetCtlTitle(ctl));
+        }
     }
 }
 
