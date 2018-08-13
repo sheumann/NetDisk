@@ -260,7 +260,15 @@ resource rTextForLETextBox2 (helpWindow+helpTxt) {
  * Error messages
  */
 
-#define mountURLError 3000
+#define netDiskMissingError 3000
+#define mountURLError       3001
+
+resource rAlertString (netDiskMissingError) {
+    "62/"
+    "To use this control panel, you must have NetDiskInit installed "
+    "in the System:System.Setup folder on the boot disk."
+    "/^#0\$00"
+};
 
 resource rAlertString (mountURLError) {
     "32:"

@@ -32,7 +32,8 @@
 //#define optionsPopUp      6
 //#define trianglePic       7
 
-#define mountURLError 3000
+#define netDiskMissingError 3000
+#define mountURLError       3001
 
 extern void FreeAllCDevMem(void);
 
@@ -91,6 +92,17 @@ void DoHit(long ctlID, CtlRecHndl ctlHandle)
 
 long DoMachine(void)
 {
+    mountURLRec.result = NETDISK_NOT_PRESENT;
+    mountURLRec.url = "";
+
+    SendRequest(MountURL, sendToName|stopAfterOne, (Long)NETDISK_REQUEST_NAME,
+                (Long)&mountURLRec, NULL);
+
+    if (mountURLRec.result == NETDISK_NOT_PRESENT) {
+        AlertWindow(awResource+awButtonLayout, NULL, netDiskMissingError);
+        return 0;
+    }
+
     return 1;
 }
 
