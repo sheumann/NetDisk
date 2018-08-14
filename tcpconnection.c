@@ -1,8 +1,5 @@
 #pragma noroot
 
-#define NETWORK_ERR 1
-#define NO_RESP_ERR 2
-
 #include <tcpip.h>
 #include <stdlib.h>
 #include <orca.h>
@@ -57,6 +54,7 @@ void EndTCPConnection(Session *sess) {
         TCPIPPoll();
         TCPIPAbortTCP(sess->ipid);
         TCPIPLogout(sess->ipid);
+        sess->ipid = 0;
         sess->tcpLoggedIn = FALSE;
     }
 }

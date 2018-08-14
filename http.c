@@ -93,7 +93,10 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
 enum NetDiskError 
 DoHTTPRequest(Session *sess, unsigned long start, unsigned long end) {
 top:;
-    rlrBuff rlrBuff = {0};
+    union {
+        srBuff srBuff;
+        rlrBuff rlrBuff;
+    } u;
     Word tcpError;
     Boolean wantRedirect = FALSE, gotRedirect = FALSE;
     enum NetDiskError result;
@@ -105,6 +108,17 @@ top:;
     /* Send out request */
     result = NETWORK_ERROR;
     unsigned int netErrors = 0;
+    
+    TCPIPPoll();
+    if (sess->tcpLoggedIn) {
+        tcpError = TCPIPStatusTCP(sess->ipid, &u.srBuff);
+        if (tcpError || toolerror() || u.srBuff.srState != TCPSESTABLISHED) {
+            EndTCPConnection(sess);
+        }
+    }
+
+    u.rlrBuff.rlrBuffHandle = NULL;
+    
 netRetry:
     if (!sess->tcpLoggedIn || netErrors) {
         if (StartTCPConnection(sess) != 0)
@@ -128,7 +142,7 @@ netRetry:
         tcpError = TCPIPReadLineTCP(sess->ipid,
                 (void*)((LongWord)"\p\r\n\r\n" | 0x80000000),
                 buffTypeNewHandle, (Ref)NULL,
-                0xFFFFFF, &rlrBuff);
+                0xFFFFFF, &u.rlrBuff);
         if (tcpError || toolerror()) {
             if (netErrors == 0) {
                 netErrors++;
@@ -137,25 +151,25 @@ netRetry:
                 goto errorReturn;
             }
         }
-    } while (rlrBuff.rlrBuffCount == 0 
+    } while (u.rlrBuff.rlrBuffCount == 0 
              && GetTick() - startTime < HTTP_RESPONSE_TIMEOUT * 60);
 
     result = NO_RESPONSE;
-    if (!rlrBuff.rlrIsDataFlag)
+    if (!u.rlrBuff.rlrIsDataFlag)
         goto errorReturn;
 
     result = INVALID_RESPONSE;
     /* Response must be at least long enough for a status line & final CRLF */
-    if (rlrBuff.rlrBuffCount < 8+1+3+1+2+2)
+    if (u.rlrBuff.rlrBuffCount < 8+1+3+1+2+2)
         goto errorReturn;
     
-    HLock(rlrBuff.rlrBuffHandle);
+    HLock(u.rlrBuff.rlrBuffHandle);
     
-    char *response = *rlrBuff.rlrBuffHandle;
-    char *responseEnd = response + rlrBuff.rlrBuffCount;
+    char *response = *u.rlrBuff.rlrBuffHandle;
+    char *responseEnd = response + u.rlrBuff.rlrBuffCount;
     /* Make response a C-string. Specifically, it will end "CR LF NUL NUL". */
-    response[rlrBuff.rlrBuffCount - 2] = '\0';
-    response[rlrBuff.rlrBuffCount - 1] = '\0';
+    response[u.rlrBuff.rlrBuffCount - 2] = '\0';
+    response[u.rlrBuff.rlrBuffCount - 1] = '\0';
     
     /* Parse status line of HTTP response */
     char *endPtr;
@@ -335,7 +349,7 @@ netRetry:
     /* Wanted redirect: Retry with new location if we got it. */
     if (wantRedirect) {
         if (gotRedirect) {
-            DisposeHandle(rlrBuff.rlrBuffHandle);
+            DisposeHandle(u.rlrBuff.rlrBuffHandle);
             goto top;
         } else {
             result = UNSUPPORTED_RESPONSE;
@@ -359,12 +373,12 @@ netRetry:
         goto errorReturn;
 
     result = OPERATION_SUCCESSFUL;
-    DisposeHandle(rlrBuff.rlrBuffHandle);
+    DisposeHandle(u.rlrBuff.rlrBuffHandle);
     return result;
     
 errorReturn:
-    if (rlrBuff.rlrBuffHandle != NULL) {
-        DisposeHandle(rlrBuff.rlrBuffHandle);
+    if (u.rlrBuff.rlrBuffHandle != NULL) {
+        DisposeHandle(u.rlrBuff.rlrBuffHandle);
     }
 
     /* Error condition on this TCP connection means it can't be reused. */
