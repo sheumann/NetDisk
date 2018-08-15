@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv) {
     if (argc < 2)
-        return;
+        return -1;
     
     struct MountURLRec mountURLRec = {sizeof(struct MountURLRec)};
     mountURLRec.result = NETDISK_NOT_PRESENT;
@@ -17,5 +17,8 @@ int main(int argc, char **argv) {
     
     if (mountURLRec.result != OPERATION_SUCCESSFUL) {
         fprintf(stderr, "MountURL error %u\n", mountURLRec.result);
+        return 1;
     }
+    
+    return 0;
 }

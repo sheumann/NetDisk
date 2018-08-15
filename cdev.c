@@ -12,6 +12,7 @@
 #include <lineedit.h>
 #include <desk.h>
 #include <locator.h>
+#include <tcpip.h>
 #include "mounturl.h"
 
 #define MachineCDEV     1
@@ -51,6 +52,8 @@ void DoMount(void)
     WaitCursor();
 
     GetLETextByID(wPtr, urlLine, (StringPtr)&urlBuf);
+
+    TCPIPConnect(NULL);
 
     mountURLRec.result = NETDISK_NOT_PRESENT;
     mountURLRec.url = urlBuf + 1;
@@ -99,6 +102,7 @@ long DoMachine(void)
                 (Long)&mountURLRec, NULL);
 
     if (mountURLRec.result == NETDISK_NOT_PRESENT) {
+        InitCursor();
         AlertWindow(awResource+awButtonLayout, NULL, netDiskMissingError);
         return 0;
     }
