@@ -295,6 +295,7 @@ static Word DoMountURL(struct GSOSDP *dp) {
     //TODO report disk switch
     
     mountURLRec->result = OPERATION_SUCCESSFUL;
+    mountURLRec->devNum = dp->dibPointer->DIBDevNum;
     return 0;
 }
 

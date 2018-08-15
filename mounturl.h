@@ -12,6 +12,7 @@ struct MountURLRec {
     Word byteCount;
     enum NetDiskError result; /* output value */
     char *url; /* C-string; will be modified */
+    Word devNum; /* output value: device number */
 };
 
 #endif
