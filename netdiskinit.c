@@ -13,6 +13,8 @@
 #include "mounturl.h"
 #include "version.h"
 
+#define TCPIP_REQUEST_NAME "\pTCP/IP~STH~NetDisk~"
+
 const char bootInfoString[] = "NetDisk               " BOOT_INFO_VERSION;
 
 Word *unloadFlagPtr;
@@ -32,6 +34,9 @@ static struct NotificationProcRec {
 
 static void notificationProc(void);
 static pascal Word mountRequestProc(Word reqCode, void *dataIn, void *dataOut);
+static pascal Word tcpipRequestProc(Word reqCode, void *dataIn, void *dataOut);
+
+static void ejectAll(void);
 
 #define JML 0x5C
 
@@ -83,6 +88,9 @@ int main(void) {
     
     /* Accept requests to mount URLs */
     AcceptRequests(NETDISK_REQUEST_NAME, userid(), &mountRequestProc);
+
+    /* Accept requests (notifications) from Marinetti */
+    AcceptRequests(TCPIP_REQUEST_NAME, userid(), &tcpipRequestProc);
 
     return;
     
@@ -139,6 +147,41 @@ static pascal Word mountRequestProc(Word reqCode, void *dataIn, void *dataOut) {
     if (reqCode == MountURL) {
         doMountURL((struct MountURLRec *) dataIn);
         return 0x8000;
+    }
+    
+    return 0;
+}
+#pragma toolparms 0
+#pragma databank 0
+
+
+/*
+ * Procedure to "eject" all our disks (called when network goes down).
+ */
+static void ejectAll(void) {
+    DAccessRecGS controlRec = {5};
+    controlRec.code = eject;
+    controlRec.list = NULL;
+    controlRec.requestCount = 0;
+        
+    for (unsigned i = 0; i < NDIBS; i++) {
+        controlRec.devNum = dibs[i].DIBDevNum;
+        if (controlRec.devNum == 0)
+            continue;
+
+        DControl(&controlRec);
+    }
+}
+
+/*
+ * Request procedure called by Marinetti with its notifications.
+ * If the network has gone down, we unmount all the disks.
+ */
+#pragma databank 1
+#pragma toolparms 1
+static pascal Word tcpipRequestProc(Word reqCode, void *dataIn, void *dataOut) {
+    if (reqCode == TCPIPSaysNetworkDown) {
+        ejectAll();
     }
     
     return 0;
