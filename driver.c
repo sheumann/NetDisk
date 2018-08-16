@@ -311,11 +311,25 @@ static Word DoRead(struct GSOSDP *dp) {
         return drvrOffLine;
     }
 
-    //TODO check size is multiple of a block
     //TODO disk-switched logic
     
     unsigned long readStart = dp->blockNum * dp->blockSize + sess->dataOffset;
     unsigned long readEnd = readStart + dp->requestCount - 1;
+    
+    /* Do sanity checks of input values */
+    if (dp->blockSize == 0) {
+        dp->transferCount = 0;
+        return drvrBadBlock;
+    }
+    if (dp->requestCount % dp->blockSize != 0) {
+        dp->transferCount = 0;
+        return drvrBadCount;
+    }
+    if (readEnd < readStart || readStart / dp->blockSize != dp->blockNum)
+    {
+        dp->transferCount = 0;
+        return drvrBadBlock;
+    }
     
     enum NetDiskError err = DoHTTPRequest(sess, readStart, readEnd);
     if (err != OPERATION_SUCCESSFUL) {
