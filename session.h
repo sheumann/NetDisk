@@ -12,6 +12,7 @@ typedef struct Session {
     /* ReadTCP status */
     LongWord readCount;
     Byte *readPtr;
+    LongWord lastReadTime;
 
     /* Marinetti error codes, both the tcperr* value and any tool error */
     Word tcperr;

@@ -6,7 +6,8 @@
 typedef enum ReadStatus {
     rsDone,
     rsWaiting,
-    rsError
+    rsError,
+    rsTimedOut
 } ReadStatus;
 
 void InitReadTCP(Session *sess, LongWord readCount, void *readPtr);

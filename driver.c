@@ -264,11 +264,16 @@ static Word DoMountURL(struct GSOSDP *dp) {
         return drvrIOError;
     }
     
+    ReadStatus readStatus;
     InitReadTCP(sess, sizeof(sess->fileHeader.buf), &sess->fileHeader.buf);
-    while (TryReadTCP(sess) == rsWaiting)
-        // TODO timeout
+    while ((readStatus = TryReadTCP(sess)) == rsWaiting)
         /* keep reading */ ;
-    //TODO detect errors
+    if (readStatus != rsDone) {
+        EndNetDiskSession(sess);
+        dp->transferCount = 0;
+        mountURLRec->result = NETWORK_ERROR;
+        return drvrIOError;
+    }
     
     err = CheckTwoImg(sess);
     if (err != OPERATION_SUCCESSFUL) {
@@ -318,13 +323,17 @@ static Word DoRead(struct GSOSDP *dp) {
         return drvrIOError;
     }
     
+    ReadStatus readStatus;
     InitReadTCP(sess, dp->requestCount, dp->bufferPtr);
-    while (TryReadTCP(sess) == rsWaiting)
-        // TODO timeout
+    while ((readStatus = TryReadTCP(sess)) == rsWaiting)
         /* keep reading */ ;
-    //TODO detect errors
     
     dp->transferCount = dp->requestCount - sess->readCount;
+    
+    if (readStatus != rsDone) {
+        return drvrIOError;
+    }
+    
     return 0;
 }
 
