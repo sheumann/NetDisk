@@ -10,6 +10,7 @@
 #include "tcpconnection.h"
 #include "asmglue.h"
 #include "mounturl.h"
+#include "systemservices.h"
 #include "version.h"
 
 #define BLOCK_SIZE 512
@@ -297,7 +298,7 @@ static Word DoMountURL(struct GSOSDP *dp) {
     
     dp->dibPointer->extendedDIBPtr = sess;
     
-    //TODO report disk switch
+    SetDiskSw();
     
     mountURLRec->result = OPERATION_SUCCESSFUL;
     mountURLRec->devNum = dp->dibPointer->DIBDevNum;

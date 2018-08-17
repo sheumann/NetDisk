@@ -7,7 +7,7 @@ HTTPTEST_PROG = httptest
 MOUNTURL_OBJS = mounturl.a
 MOUNTURL_PROG = mounturl
 
-NETDISKINIT_OBJS = initstart.a netdiskinit.a hostname.a http.a readtcp.a seturl.a strcasecmp.a tcpconnection.a urlparser.a driver.a installdriver.a asmglue.a driverwrapper.a session.a
+NETDISKINIT_OBJS = initstart.a netdiskinit.a hostname.a http.a readtcp.a seturl.a strcasecmp.a tcpconnection.a urlparser.a driver.a installdriver.a asmglue.a driverwrapper.a session.a systemservices.a
 # NETDISKINIT_RSRC = 
 NETDISKINIT_PROG = NetDiskInit
 
