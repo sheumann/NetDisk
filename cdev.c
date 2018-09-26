@@ -48,6 +48,7 @@ void DoMount(void)
 {
     char numStr[6] = "";
     char *subs[1] = {numStr};
+    static char alertString[200];
 
     WaitCursor();
 
@@ -64,10 +65,11 @@ void DoMount(void)
     InitCursor();
 
     if (mountURLRec.result != OPERATION_SUCCESSFUL) {
-        //TODO better error messages
         snprintf(numStr, sizeof(numStr), "%u", mountURLRec.result);
-        AlertWindow(awResource+awCString+awButtonLayout, (Pointer)subs,
-                    mountURLError);
+        snprintf(alertString, sizeof(alertString), "42~%.175s~^#0\0",
+                 ErrorString(mountURLRec.result));
+        AlertWindow(awPointer+awCString+awButtonLayout, (Pointer)subs,
+                    (Ref)alertString);
         
         /* Work around issue where parts of LE caret may flash out of sync */
         CtlRecHndl ctl = GetCtlHandleFromID(wPtr, urlLine);

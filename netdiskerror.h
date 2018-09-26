@@ -42,4 +42,11 @@ enum NetDiskError {
     
 };
 
+
+/*
+ * Return a string describing the error.  It may contain the substitution
+ * string "*0", which should be replaced by the error number.
+ */
+char *ErrorString(enum NetDiskError err);
+
 #endif

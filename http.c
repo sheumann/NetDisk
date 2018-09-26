@@ -218,7 +218,12 @@ netRetry:
             result = EXCESSIVE_REDIRECTS;
             goto errorReturn;
         }
-              
+
+    /* Full content in response to range request: not supported by NetDisk */
+    case 200:
+        result = NOT_DESIRED_CONTENT;
+        goto errorReturn;
+      
     default:
         if (sess->responseCode < 400 || sess->responseCode > 599) {
             result = UNSUPPORTED_RESPONSE;

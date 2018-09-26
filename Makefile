@@ -11,7 +11,7 @@ NETDISKINIT_OBJS = initstart.a netdiskinit.a hostname.a http.a readtcp.a seturl.
 # NETDISKINIT_RSRC = 
 NETDISKINIT_PROG = NetDiskInit
 
-NETDISKCDEV_OBJS = cdev.a cdevutil.a
+NETDISKCDEV_OBJS = cdev.a cdevutil.a netdiskerror.a
 NETDISKCDEV_RSRC = cdev.rez
 NETDISKCDEV_CDEV = NetDisk
 

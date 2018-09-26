@@ -1,3 +1,5 @@
+#pragma noroot
+
 #include <stdlib.h>
 #include "session.h"
 #include "tcpconnection.h"
