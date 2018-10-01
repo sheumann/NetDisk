@@ -262,6 +262,7 @@ resource rTextForLETextBox2 (helpWindow+helpTxt) {
 
 #define netDiskMissingError 3000
 #define mountURLError       3001
+#define unsupportedProtocolAlert 3002
 
 resource rAlertString (netDiskMissingError) {
     "62/"
@@ -275,3 +276,12 @@ resource rAlertString (mountURLError) {
     "MountURL error *0."
     ":^#0\$00"
 };
+
+resource rAlertString (unsupportedProtocolAlert) {
+    "64:"
+    "NetDisk does not support the *0 protocol. Do you want to try "
+    "connecting using unencrypted HTTP instead? (The server may "
+    "or may not support this.)"
+    ":#3:^#2\$00"
+};
+

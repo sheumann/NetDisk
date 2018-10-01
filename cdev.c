@@ -3,6 +3,7 @@
 #include <types.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include <gsos.h>
 #include <orca.h>
 #include <quickdraw.h>
@@ -14,6 +15,7 @@
 #include <locator.h>
 #include <tcpip.h>
 #include "mounturl.h"
+#include "strcasecmp.h"
 
 #define MachineCDEV     1
 #define BootCDEV        2
@@ -35,6 +37,8 @@
 
 #define netDiskMissingError 3000
 #define mountURLError       3001
+#define unsupportedProtocolAlert 3002
+#define yesBtn 1        /* number of "Yes" button in alert */
 
 extern void FreeAllCDevMem(void);
 
@@ -49,15 +53,36 @@ void DoMount(void)
     char numStr[6] = "";
     char *subs[1] = {numStr};
     static char alertString[200];
-
-    WaitCursor();
+    enum {HTTPS, FTP, OTHER_PROTOCOL} protocol = OTHER_PROTOCOL;
 
     GetLETextByID(wPtr, urlLine, (StringPtr)&urlBuf);
 
+    if (strncasecmp(urlBuf+1, "https://", 8) == 0) {
+        protocol = HTTPS;
+        subs[0] = "HTTPS";
+        strncpy(urlBuf+2, "http", 4);
+        mountURLRec.url = urlBuf + 2;
+    } else if (strncasecmp(urlBuf+1, "ftp://", 6) == 0) {
+        protocol = FTP;
+        subs[0] = "FTP";
+        strncpy(urlBuf, "http", 4);
+        mountURLRec.url = urlBuf;
+    } else {
+        protocol = OTHER_PROTOCOL;
+        mountURLRec.url = urlBuf + 1;
+    }
+    
+    if (protocol == HTTPS || protocol == FTP) {
+        if (AlertWindow(awResource+awCString+awButtonLayout,
+                        (Pointer)subs, unsupportedProtocolAlert) != yesBtn) {
+            return;
+        }
+    }
+
+    WaitCursor();
     TCPIPConnect(NULL);
 
     mountURLRec.result = NETDISK_NOT_PRESENT;
-    mountURLRec.url = urlBuf + 1;
 
     SendRequest(MountURL, sendToName|stopAfterOne, (Long)NETDISK_REQUEST_NAME,
                 (Long)&mountURLRec, NULL);
@@ -68,6 +93,7 @@ void DoMount(void)
         snprintf(numStr, sizeof(numStr), "%u", mountURLRec.result);
         snprintf(alertString, sizeof(alertString), "42~%.175s~^#0\0",
                  ErrorString(mountURLRec.result));
+        subs[0] = numStr;
         AlertWindow(awPointer+awCString+awButtonLayout, (Pointer)subs,
                     (Ref)alertString);
         
