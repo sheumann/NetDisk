@@ -337,7 +337,18 @@ static Word DoRead(struct GSOSDP *dp) {
     enum NetDiskError err = DoHTTPRequest(sess, readStart, readEnd);
     if (err != OPERATION_SUCCESSFUL) {
         dp->transferCount = 0;
-        return drvrIOError;
+        if (err == DIFFERENT_LENGTH) {
+            if ((sess->totalLength - sess->dataOffset) % BLOCK_SIZE != 0) {
+                return drvrIOError;
+            } else {
+                sess->dataLength = sess->totalLength - sess->dataOffset;
+                dp->dibPointer->blockCount = sess->dataLength / BLOCK_SIZE;
+                sess->expectedLength = sess->totalLength;
+                return drvrDiskSwitch;
+            }
+        } else {
+            return drvrIOError;
+        }
     }
     
     ReadStatus readStatus;

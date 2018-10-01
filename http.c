@@ -363,7 +363,9 @@ netRetry:
     }
     
     /* See if we got what we wanted */
-    if (sess->expectedLength != 0 && sess->totalLength != sess->expectedLength) {
+    if (sess->expectedLength == 0) {
+        sess->expectedLength = sess->totalLength;
+    } else if (sess->totalLength != sess->expectedLength) {
         result = DIFFERENT_LENGTH;
         goto errorReturn;
     }

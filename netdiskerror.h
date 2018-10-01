@@ -31,7 +31,7 @@ enum NetDiskError {
     UNSUPPORTED_HEADER_VALUE,
     REDIRECT_ERROR,
     NOT_DESIRED_CONTENT,
-    DIFFERENT_LENGTH, /* Might be considered successful later */
+    DIFFERENT_LENGTH,
     
     /* Error values of 4xx and 5xx mean we got the corresponding HTTP error */
     HTTP_ERROR = 400,
