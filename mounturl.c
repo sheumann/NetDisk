@@ -3,21 +3,48 @@
 #include <stdio.h>
 #include <locator.h>
 #include "mounturl.h"
+#include "netdiskerror.h"
+
+static void usage(void) {
+    fprintf(stderr, "Usage: mounturl [-c] url\n");
+    exit(EXIT_FAILURE);
+}
+
 
 int main(int argc, char **argv) {
-    if (argc < 2)
-        return -1;
-    
     struct MountURLRec mountURLRec = {sizeof(struct MountURLRec)};
+    int i = 1;
+    int flags = flgUseCache;
+    
+    while (i < argc && argv[i][0] == '-') {
+        switch(argv[i][1]) {
+        case 'c':
+                flags &= ~flgUseCache;
+                break;
+
+        default:
+                usage();
+        }
+        i++;
+    }
+    
+    if (i >= argc)
+        usage();
+    
     mountURLRec.result = NETDISK_NOT_PRESENT;
-    mountURLRec.url = argv[1];
-    mountURLRec.flags = flgUseCache;
+    mountURLRec.url = argv[i];
+    mountURLRec.flags = flags;
     
     SendRequest(MountURL, sendToName|stopAfterOne, (Long)NETDISK_REQUEST_NAME,
                 (Long)&mountURLRec, NULL);
     
     if (mountURLRec.result != OPERATION_SUCCESSFUL) {
-        fprintf(stderr, "MountURL error %u\n", mountURLRec.result);
+        char *errString = ErrorString(mountURLRec.result);
+        if (strchr(errString, '*') == NULL) {
+            fprintf(stderr, "%s\n", errString);
+        } else {
+            fprintf(stderr, "NetDisk error %u.\n", mountURLRec.result);
+        }
         return 1;
     }
     

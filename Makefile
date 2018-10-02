@@ -4,7 +4,7 @@ CFLAGS = -w-1 -O-1
 HTTPTEST_OBJS = httptest.a hostname.a http.a readtcp.a seturl.a strcasecmp.a tcpconnection.a urlparser.a
 HTTPTEST_PROG = httptest
 
-MOUNTURL_OBJS = mounturl.a
+MOUNTURL_OBJS = mounturl.a netdiskerror.a
 MOUNTURL_PROG = mounturl
 
 NETDISKINIT_OBJS = initstart.a netdiskinit.a hostname.a http.a readtcp.a seturl.a strcasecmp.a tcpconnection.a urlparser.a driver.a installdriver.a asmglue.a driverwrapper.a session.a systemservices.a

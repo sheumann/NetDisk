@@ -13,14 +13,6 @@
 #include "tcpconnection.h"
 #include "readtcp.h"
 
-/*
-http://archive.org/download/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg
-redirects to:
-http://ia800505.us.archive.org/16/items/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg
-*/
-
-char *defaultURL = "http://archive.org/download/a2gs_System_1.0_1986_Apple_FW/System_1.0_1986_Apple_FW.2mg";
-
 char buf[512];
 
 int main(int argc, char **argv) {
@@ -37,7 +29,10 @@ int main(int argc, char **argv) {
 
     Session sess = {0};
 
-    char *url = (argc > 1) ? argv[1] : defaultURL;
+    if (argc < 2)
+        goto exit;
+
+    char *url = argv[1];
     
     enum NetDiskError result = SetURL(&sess, url, TRUE, FALSE);
 
