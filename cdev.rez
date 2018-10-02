@@ -87,6 +87,7 @@ resource rIcon (1) {
 #define mountBtn            1
 //#define optionsPopUp      6
 //#define trianglePic       7
+#define useCacheChk         8
 
 #define helpTxt             5
 
@@ -98,6 +99,7 @@ resource rControlList (640) {
     {
         cdevWindow+imageURLTxt,
         cdevWindow+urlLine,
+        cdevWindow+useCacheChk,
         cdevWindow+mountBtn,
         //cdevWindow+trianglePic,
         //cdevWindow+optionsPopUp
@@ -108,6 +110,7 @@ resource rControlList (320) {
     {
         cdevWindow+imageURLTxt,
         cdevWindow+urlLine,
+        cdevWindow+useCacheChk,
         cdevWindow+mountBtn,
         //cdevWindow+trianglePic+320,
         //cdevWindow+optionsPopUp+320
@@ -157,6 +160,19 @@ resource rControlTemplate (cdevWindow+mountBtn) {
 };
 
 resource rPString(cdevWindow+mountBtn) { "Mount Disk Image" };
+
+resource rControlTemplate (cdevWindow+useCacheChk) {
+    useCacheChk,
+    {37,10,0,0},
+    CheckControl {{
+        $0000,
+        $1002,
+        0,
+        cdevWindow+useCacheChk,             /* Title ref */
+        1                                   /* initial value */
+    }};
+};
+resource rPString (cdevWindow+useCacheChk) {"Use Disk Cache"};
 
 #if 0
 /* Options menu pop-up -- separate versions for 640 mode and 320 mode */

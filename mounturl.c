@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
     struct MountURLRec mountURLRec = {sizeof(struct MountURLRec)};
     mountURLRec.result = NETDISK_NOT_PRESENT;
     mountURLRec.url = argv[1];
+    mountURLRec.flags = flgUseCache;
     
     SendRequest(MountURL, sendToName|stopAfterOne, (Long)NETDISK_REQUEST_NAME,
                 (Long)&mountURLRec, NULL);

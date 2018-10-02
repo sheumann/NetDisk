@@ -8,10 +8,14 @@
 
 #define NETDISK_REQUEST_NAME "\pSTH~NetDisk~"
 
+/* Bits in flags */
+#define flgUseCache 0x0001
+
 struct MountURLRec {
     Word byteCount;
     enum NetDiskError result; /* output value */
     char *url; /* C-string; will be modified */
+    Word flags;
     Word devNum; /* output value: device number */
 };
 

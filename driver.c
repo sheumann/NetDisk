@@ -251,7 +251,7 @@ static Word DoMountURL(struct GSOSDP *dp) {
         mountURLRec->result = OUT_OF_MEMORY;
         return drvrNoResrc;
     }
-    sess->useCache = TRUE;
+    sess->useCache = (mountURLRec->flags & flgUseCache);
     
     err = SetURL(sess, mountURLRec->url, TRUE, FALSE);
     if (err != OPERATION_SUCCESSFUL) {

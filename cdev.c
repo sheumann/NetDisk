@@ -34,6 +34,7 @@
 #define mountBtn            1
 //#define optionsPopUp      6
 //#define trianglePic       7
+#define useCacheChk         8
 
 #define netDiskMissingError 3000
 #define mountURLError       3001
@@ -45,6 +46,8 @@ extern void FreeAllCDevMem(void);
 char urlBuf[257];
 
 WindowPtr wPtr = NULL;
+
+Boolean useCache;
 
 struct MountURLRec mountURLRec = {sizeof(struct MountURLRec)};
 
@@ -83,6 +86,11 @@ void DoMount(void)
     TCPIPConnect(NULL);
 
     mountURLRec.result = NETDISK_NOT_PRESENT;
+    
+    mountURLRec.flags = 0;
+    if (useCache) {
+        mountURLRec.flags |= flgUseCache;
+    }
 
     SendRequest(MountURL, sendToName|stopAfterOne, (Long)NETDISK_REQUEST_NAME,
                 (Long)&mountURLRec, NULL);
@@ -108,14 +116,13 @@ void DoMount(void)
 
 void DoHit(long ctlID, CtlRecHndl ctlHandle)
 {
-    CtlRecHndl oldMenuBar;
-    Word menuItem;
-
     if (!wPtr)  /* shouldn't happen */
         return;
 
     if (ctlID == mountBtn) {
         DoMount();
+    } else if (ctlID == useCacheChk) {
+        useCache = !useCache;
     }
 
     return;
@@ -179,6 +186,7 @@ void DoCreate(WindowPtr windPtr)
     wPtr = windPtr;
     mode = (GetMasterSCB() & scbColorMode) ? 640 : 320;
     NewControl2(wPtr, resourceToResource, mode);
+    useCache = TRUE;
 }
 
 LongWord cdevMain (LongWord data2, LongWord data1, Word message)
