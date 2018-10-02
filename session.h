@@ -55,6 +55,9 @@ typedef struct Session {
     /* Length of disk image data */
     LongWord dataLength;
     
+    /* Should the GS/OS block cache be used? */
+    Boolean useCache;
+    
     /* Buffer for initial bytes of file (which may be a disk image header) */
     union {
         unsigned char buf[32];

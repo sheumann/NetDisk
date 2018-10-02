@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <gsos.h>
 #include "driver.h"
 #include "driverwrapper.h"
@@ -250,6 +251,7 @@ static Word DoMountURL(struct GSOSDP *dp) {
         mountURLRec->result = OUT_OF_MEMORY;
         return drvrNoResrc;
     }
+    sess->useCache = TRUE;
     
     err = SetURL(sess, mountURLRec->url, TRUE, FALSE);
     if (err != OPERATION_SUCCESSFUL) {
@@ -333,6 +335,33 @@ static Word DoRead(struct GSOSDP *dp) {
         dp->transferCount = 0;
         return drvrBadBlock;
     }
+
+    LongWord firstBlockNum;
+    LongWord endBlockNum;
+    unsigned char *bufferPtr;
+
+    Boolean useCache = sess->useCache
+                       && (int)dp->cachePriority > 0
+                       && (dp->fstNum & 0x8000) == 0
+                       && dp->blockSize == BLOCK_SIZE;
+    if (useCache) {
+        firstBlockNum = dp->blockNum;
+        endBlockNum = firstBlockNum + dp->requestCount / BLOCK_SIZE;
+        bufferPtr = dp->bufferPtr;
+        for (; dp->blockNum < endBlockNum; dp->blockNum++) {
+            if (!CacheFindBlk()) {
+                goto skipCache;
+            }
+            memmove(bufferPtr, dp->cachePointer, BLOCK_SIZE);
+            bufferPtr += BLOCK_SIZE;
+        }
+        dp->blockNum = firstBlockNum;
+        dp->transferCount = dp->requestCount;
+        return 0;
+skipCache:
+        useCache = (dp->blockNum == firstBlockNum);
+        dp->blockNum = firstBlockNum;
+    }
     
     enum NetDiskError err = DoHTTPRequest(sess, readStart, readEnd);
     if (err != OPERATION_SUCCESSFUL) {
@@ -360,6 +389,19 @@ static Word DoRead(struct GSOSDP *dp) {
     
     if (readStatus != rsDone) {
         return drvrIOError;
+    }
+    
+    if (useCache && sess->readCount == 0) {
+        bufferPtr = dp->bufferPtr;
+        dp->blockNum = firstBlockNum;
+        for (; dp->blockNum < endBlockNum; dp->blockNum++) {
+            if (!CacheAddBlk()) {
+                break;
+            }
+            memmove(dp->cachePointer, bufferPtr, BLOCK_SIZE);
+            bufferPtr += BLOCK_SIZE;
+        }
+        dp->blockNum = firstBlockNum;
     }
     
     return 0;
