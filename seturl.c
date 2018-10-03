@@ -25,7 +25,7 @@ SetURL(Session *sess, char *url, Boolean permissive, Boolean partialOK) {
     }
     
     for(unsigned int i = 0; url[i] != '\0'; i++) {
-        if ((unsigned char)url[i] <= ' ') {
+        if ((unsigned char)url[i] < ' ') {
             return INVALID_CHARACTER_IN_URL;
         }
     }

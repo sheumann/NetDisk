@@ -47,10 +47,35 @@ UpdateRequestRange(Session *sess, unsigned long start, unsigned long end) {
 
 
 Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
-    int sizeNeeded = 0;
+    long sizeNeeded;
     int rangeOffset;
     int round = 0;
 
+    char *escapedStr = NULL;
+    if (strchr(resourceStr, ' ') != NULL) {
+        sizeNeeded = strlen(resourceStr);
+        if (sizeNeeded > 10000)
+            return FALSE;
+        escapedStr = malloc(sizeNeeded*3 + 1);
+        if (escapedStr == NULL)
+            return FALSE;
+
+        char *s = escapedStr;
+        char c;
+        while ((c = *resourceStr++) != '\0') {
+            if (c == ' ') {
+                *s++ = '%';
+                *s++ = '2';
+                *s++ = '0';
+            } else {
+                *s++ = c;
+            }
+            *s = '\0';
+        }
+        resourceStr = escapedStr;
+    }
+
+    sizeNeeded = 0;
     do {
         sizeNeeded = snprintf(sess->httpRequest, sizeNeeded, 
             "GET /%s HTTP/1.1\r\n"
@@ -69,6 +94,7 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
             free(sess->httpRequest);
             sess->httpRequest = NULL;
             sess->httpRequestRange = NULL;
+            free(escapedStr);
             return FALSE;
         }
 
@@ -78,10 +104,13 @@ Boolean BuildHTTPRequest(Session *sess, char *resourceStr) {
             sess->httpRequest = malloc(sizeNeeded);
             if (sess->httpRequest == NULL) {
                 sess->httpRequestRange = NULL;
+                free(escapedStr);
                 return FALSE;
             }
         }
     } while (round++ == 0);
+    
+    free(escapedStr);
     
     sess->httpRequestRange = sess->httpRequest + rangeOffset;
     
@@ -317,10 +346,14 @@ netRetry:
         case LOCATION:
             endPtr = response;
             char c;
-            while ((c = *endPtr)!=0 && c!='\r' && c!='\n' && c!=' ' && c!='\t')
+            while ((c = *endPtr) != '\0' && c != '\r' && c != '\n')
                 endPtr++;
             if (c == '\0' || c == '\n')
                 goto errorReturn;
+            while (endPtr > response
+                && (*(endPtr-1) == ' ' || *(endPtr-1) == '\t')) {
+                c = *--endPtr;
+            }
             if (wantRedirect) {
                 *endPtr = '\0';
                 if (SetURL(sess, response, FALSE, TRUE) != OPERATION_SUCCESSFUL) {
@@ -331,6 +364,7 @@ netRetry:
                 response = endPtr;
                 gotRedirect = TRUE;
             }
+            break;
         
         /* Unknown headers: ignored */
         case UNKNOWN_HEADER:
