@@ -34,7 +34,7 @@ struct DIBList {
 struct GSOSDP {
     Word deviceNum;
     Word callNum;
-    void *bufferPtr; 
+    Byte *bufferPtr; 
     LongWord requestCount;
     LongWord transferCount;
     LongWord blockNum;

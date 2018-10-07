@@ -55,6 +55,9 @@ typedef struct Session {
     /* Length of disk image data */
     LongWord dataLength;
     
+    /* Is the image in DOS order? */
+    Boolean dosOrder;
+    
     /* Should the GS/OS block cache be used? */
     Boolean useCache;
     

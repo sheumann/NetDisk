@@ -18,6 +18,13 @@
 
 #define BLOCK_SIZE 512
 
+/* Disk II-style track/sector layout (relevant to DOS-order images) */
+#define TRACK_SIZE (BLOCK_SIZE * 8)
+#define SECTOR_SIZE 256
+/* The sectors making up each block within a track (using DOS 3.3 numbering) */
+static const int sectorMap[2][8] = {{ 0, 13, 11, 9, 7, 5, 3,  1},
+                                    {14, 12, 10, 8, 6, 4, 2, 15}};
+
 struct DIB dibs[NDIBS] = {0};
 struct DIBList dibList = {NDIBS};
 
@@ -212,10 +219,16 @@ static enum NetDiskError CheckTwoImg(Session *sess) {
     /* It's a 2IMG file, but is it one we can handle? */
     if (hdr->version > 1)
         return UNSUPPORTED_2IMG_FILE;
-    if (hdr->imgFormat != IMAGE_FORMAT_PRODOS_ORDER)
-        return UNSUPPORTED_2IMG_FILE;
     if (hdr->dataLength % BLOCK_SIZE != 0)
         return UNSUPPORTED_2IMG_FILE;
+
+    if (hdr->imgFormat == IMAGE_FORMAT_DOS_33_ORDER) {
+        if (hdr->dataLength % TRACK_SIZE != 0)
+            return UNSUPPORTED_2IMG_FILE;
+        sess->dosOrder = TRUE;
+    } else if (hdr->imgFormat != IMAGE_FORMAT_PRODOS_ORDER) {
+        return UNSUPPORTED_2IMG_FILE;
+    }
     
     sess->dataOffset = hdr->dataOffset;
     sess->dataLength = hdr->dataLength;
@@ -363,32 +376,76 @@ skipCache:
         dp->blockNum = firstBlockNum;
     }
     
-    enum NetDiskError err = DoHTTPRequest(sess, readStart, readEnd);
-    if (err != OPERATION_SUCCESSFUL) {
-        dp->transferCount = 0;
-        if (err == DIFFERENT_LENGTH) {
-            if ((sess->totalLength - sess->dataOffset) % BLOCK_SIZE != 0) {
-                return drvrIOError;
+    enum NetDiskError err;
+    ReadStatus readStatus;
+
+    if (!sess->dosOrder) {
+        err = DoHTTPRequest(sess, readStart, readEnd);
+        if (err != OPERATION_SUCCESSFUL) {
+            dp->transferCount = 0;
+            if (err == DIFFERENT_LENGTH) {
+                if ((sess->totalLength - sess->dataOffset) % BLOCK_SIZE != 0) {
+                    return drvrIOError;
+                } else {
+                    sess->dataLength = sess->totalLength - sess->dataOffset;
+                    dp->dibPointer->blockCount = sess->dataLength / BLOCK_SIZE;
+                    sess->expectedLength = sess->totalLength;
+                    return drvrDiskSwitch;
+                }
             } else {
-                sess->dataLength = sess->totalLength - sess->dataOffset;
-                dp->dibPointer->blockCount = sess->dataLength / BLOCK_SIZE;
-                sess->expectedLength = sess->totalLength;
-                return drvrDiskSwitch;
+                return drvrIOError;
             }
-        } else {
+        }
+
+        InitReadTCP(sess, dp->requestCount, dp->bufferPtr);
+        while ((readStatus = TryReadTCP(sess)) == rsWaiting)
+            /* keep reading */ ;
+    
+        dp->transferCount = dp->requestCount - sess->readCount;
+    
+        if (readStatus != rsDone) {
             return drvrIOError;
         }
-    }
+    } else {
+        if (dp->blockSize != BLOCK_SIZE) {
+            dp->transferCount = 0;
+            return drvrBadBlock;
+        }
+        
+        firstBlockNum = dp->blockNum;
+        endBlockNum = firstBlockNum + dp->requestCount / BLOCK_SIZE;
+
+        int half = 0;
+        dp->transferCount = 0;
+        while (dp->blockNum < endBlockNum) {
+            readStart = (dp->blockNum >> 3) * TRACK_SIZE
+                        + sectorMap[half][dp->blockNum & 0x7] * SECTOR_SIZE
+                        + sess->dataOffset;
+            readEnd = readStart + (SECTOR_SIZE - 1);
+
+            err = DoHTTPRequest(sess, readStart, readEnd);
+            if (err != OPERATION_SUCCESSFUL) {
+                dp->blockNum = firstBlockNum;
+                return drvrIOError;
+            }
+
+            InitReadTCP(sess, SECTOR_SIZE, dp->bufferPtr + dp->transferCount);
+            while ((readStatus = TryReadTCP(sess)) == rsWaiting)
+                /* keep reading */ ;
     
-    ReadStatus readStatus;
-    InitReadTCP(sess, dp->requestCount, dp->bufferPtr);
-    while ((readStatus = TryReadTCP(sess)) == rsWaiting)
-        /* keep reading */ ;
+            if (readStatus != rsDone || sess->readCount != 0) {
+                dp->blockNum = firstBlockNum;
+                return drvrIOError;
+            }
     
-    dp->transferCount = dp->requestCount - sess->readCount;
-    
-    if (readStatus != rsDone) {
-        return drvrIOError;
+            dp->transferCount += SECTOR_SIZE;
+            
+            half ^= 1;
+            if (half == 0)
+                dp->blockNum++;
+        }
+        
+        dp->blockNum = firstBlockNum;
     }
     
     if (useCache && sess->readCount == 0) {
