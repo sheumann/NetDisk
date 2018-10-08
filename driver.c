@@ -35,6 +35,7 @@ static Word DoMountURL(struct GSOSDP *dp);
 static Word DoRead(struct GSOSDP *dp);
 static Word DoStatus(struct GSOSDP *dp);
 static Word DoEject(struct GSOSDP *dp);
+static Word DoSwitchToDOSOrder(struct GSOSDP *dp);
 static Word DoShutdown(struct GSOSDP *dp);
 
 void InitDIBs(void) {
@@ -176,7 +177,11 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
             break;
             
         case Mount_URL:
-            DoMountURL(dp);
+            retVal = DoMountURL(dp);
+            break;
+        
+        case Switch_To_DOS_Order:
+            retVal = DoSwitchToDOSOrder(dp);
             break;
         
         default:
@@ -316,13 +321,6 @@ static Word DoMountURL(struct GSOSDP *dp) {
     if (sess->dataOffset == 0) {
         /* No encapsulating disk image - treat this as raw blocks */
         sess->dataLength = sess->totalLength;
-    }
-    
-    // TODO remove this hack in favor of better format detection
-    if (mountURLRec->format == formatAutoDetect) {
-        if (sess->dataLength == DISK_II_DISK_SIZE) {
-            mountURLRec->format = formatDOSOrder;
-        }
     }
     
     if (mountURLRec->format == formatDOSOrder) {
@@ -535,6 +533,25 @@ static Word DoEject(struct GSOSDP *dp) {
     dp->dibPointer->blockCount = 0;
     
     dp->transferCount = 0;
+    return 0;
+}
+
+static Word DoSwitchToDOSOrder(struct GSOSDP *dp) {
+    dp->transferCount = 0;
+
+    if (dp->dibPointer == NULL)
+        return drvrBadParm;
+
+    Session *sess = (Session*)dp->dibPointer->extendedDIBPtr;
+    if (sess == NULL)
+        return drvrBadParm;
+
+    if (sess->dataLength % TRACK_SIZE != 0)
+        return drvrBadParm;
+
+    sess->dosOrder = TRUE;
+    SetDiskSw();
+    
     return 0;
 }
 

@@ -40,6 +40,9 @@ static void ejectAll(void);
 
 #define JML 0x5C
 
+/* Custom DControl code for switching to DOS order */
+#define SwitchToDOSOrder 0x8081
+
 
 static void setUnloadFlag(void) {
     if (unloadFlagPtr != NULL && *unloadFlagPtr == 0)
@@ -131,8 +134,37 @@ static void doMountURL(struct MountURLRec *mountURLRec) {
         controlRec.devNum = devNum;
         DControl(&controlRec);
         
-        if (mountURLRec->result != DISK_ALREADY_MOUNTED)
+        if (mountURLRec->result == OPERATION_SUCCESSFUL) {
+            if (mountURLRec->format != formatAutoDetect)
+                return;
+
+            /* Current operating assumption is that it's ProDOS-order (raw) */
+            mountURLRec->format = formatRaw;
+
+            /*
+             * Auto-detect DOS vs ProDOS order by seeing if
+             * GS/OS can recognize the volume.
+             */
+            static ResultBuf32 devName = {35};
+            static DInfoRecGS dInfoRec = {2, 0, &devName};
+            dInfoRec.devNum = devNum;
+            DInfo(&dInfoRec);
+            if (toolerror())
+                return;
+        
+            static ResultBuf255 volumeName = {255+2+2};
+            static VolumeRecGS volumeRec = {2, &devName.bufString, &volumeName};
+            Volume(&volumeRec);
+            
+            if (toolerror() == unknownVol) {
+                controlRec.code = SwitchToDOSOrder;
+                DControl(&controlRec);
+            }
+            
             return;
+        } else if (mountURLRec->result != DISK_ALREADY_MOUNTED) {
+            return;
+        }
     }
     
     mountURLRec->result = NO_DIBS_AVAILABLE;

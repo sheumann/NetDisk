@@ -68,8 +68,10 @@ struct GSOSDP {
 #define Get_Format_Options    0x0003
 #define Get_Partition_Map     0x0004
 
-/* Custom Driver_Control subcall */
+/* Custom Driver_Control subcalls */
 #define Mount_URL 0x8080
+#define Switch_To_DOS_Order 0x8081
+
 
 /* Status list record for Get_DeviceStatus */
 typedef struct DeviceStatusRec {
