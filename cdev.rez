@@ -116,7 +116,7 @@ resource rControlList (320) {
         cdevWindow+urlLine,
         cdevWindow+useCacheChk,
         cdevWindow+mountBtn,
-        cdevWindow+imageFormatMenu+320
+        cdevWindow+imageFormatMenu
     };
 };
 
@@ -182,26 +182,12 @@ resource rPString (cdevWindow+useCacheChk) {"Use Disk Cache"};
 
 resource rControlTemplate (cdevWindow+imageFormatMenu) {
     imageFormatMenu,
-    {31, 8, 43, 314},
+    {31, 9, 43, 277},
     PopUpControl {{
         0,
         fCtlProcNotPtr+RefIsResource+fDrawPopDownIcon,
         0,
-        93,                                 /* title width */
-        imageFormatMenu,                    /* menu ref */
-        formatAutoDetectItem,               /* initial value */
-        0
-    }};
-};
-
-resource rControlTemplate (cdevWindow+imageFormatMenu+320) {
-    imageFormatMenu,
-    {31, 8, 43, 312},
-    PopUpControl {{
-        0,
-        fCtlProcNotPtr+RefIsResource+fDrawPopDownIcon,
-        0,
-        95,                                 /* title width */
+        0,                                  /* title width */
         imageFormatMenu,                    /* menu ref */
         formatAutoDetectItem,               /* initial value */
         0
@@ -219,7 +205,7 @@ resource rMenu (imageFormatMenu) {
         formatDOSOrderItem
     };
 };
-resource rPString(imageFormatMenu,noCrossBank) { "Image Format" };
+resource rPString(imageFormatMenu,noCrossBank) { "Format: " };
 
 resource rMenuItem (formatAutoDetectItem) {
     formatAutoDetectItem,                   /* menu item ID */
