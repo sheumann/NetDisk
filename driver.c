@@ -21,6 +21,7 @@
 /* Disk II-style track/sector layout (relevant to DOS-order images) */
 #define TRACK_SIZE (BLOCK_SIZE * 8)
 #define SECTOR_SIZE 256
+#define DISK_II_DISK_SIZE (TRACK_SIZE * 35L)
 /* The sectors making up each block within a track (using DOS 3.3 numbering) */
 static const int sectorMap[2][8] = {{ 0, 13, 11, 9, 7, 5, 3,  1},
                                     {14, 12, 10, 8, 6, 4, 2, 15}};
@@ -293,12 +294,23 @@ static Word DoMountURL(struct GSOSDP *dp) {
         return drvrIOError;
     }
     
-    err = CheckTwoImg(sess);
-    if (err != OPERATION_SUCCESSFUL) {
-        EndNetDiskSession(sess);
-        dp->transferCount = 0;
-        mountURLRec->result = err;
-        return drvrIOError;
+    if (mountURLRec->format == formatAutoDetect 
+        || mountURLRec->format == format2mg)
+    {
+        err = CheckTwoImg(sess);
+        if (err != OPERATION_SUCCESSFUL) {
+            EndNetDiskSession(sess);
+            dp->transferCount = 0;
+            mountURLRec->result = err;
+            return drvrIOError;
+        }
+        if (sess->dataOffset != 0) {
+            mountURLRec->format = format2mg;
+        } else if (mountURLRec->format == format2mg) {
+            dp->transferCount = 0;
+            mountURLRec->result = NOT_SPECIFIED_IMAGE_TYPE;
+            return drvrIOError;
+        }
     }
     
     if (sess->dataOffset == 0) {
@@ -306,11 +318,38 @@ static Word DoMountURL(struct GSOSDP *dp) {
         sess->dataLength = sess->totalLength;
     }
     
+    // TODO remove this hack in favor of better format detection
+    if (mountURLRec->format == formatAutoDetect) {
+        if (sess->dataLength == DISK_II_DISK_SIZE) {
+            mountURLRec->format = formatDOSOrder;
+        }
+    }
+    
+    if (mountURLRec->format == formatDOSOrder) {
+        if (sess->dataLength % TRACK_SIZE != 0) {
+            dp->transferCount = 0;
+            mountURLRec->result = NOT_SPECIFIED_IMAGE_TYPE;
+            return drvrIOError;
+        }
+        sess->dosOrder = TRUE;
+    }
+    
     if (sess->dataLength % BLOCK_SIZE != 0) {
         dp->transferCount = 0;
-        mountURLRec->result = NOT_MULTIPLE_OF_BLOCK_SIZE;
+        if (mountURLRec->format == formatAutoDetect) {
+            mountURLRec->result = NOT_MULTIPLE_OF_BLOCK_SIZE;
+        } else {
+            mountURLRec->result = NOT_SPECIFIED_IMAGE_TYPE;
+        }
         return drvrIOError;
     }
+
+    if (mountURLRec->format == formatAutoDetect) {
+        if (sess->dataLength != DISK_II_DISK_SIZE) {
+            mountURLRec->format = formatRaw;
+        }
+    }
+
     dp->dibPointer->blockCount = sess->dataLength / BLOCK_SIZE;
     
     dp->dibPointer->extendedDIBPtr = sess;

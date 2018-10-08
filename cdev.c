@@ -36,6 +36,12 @@
 //#define trianglePic       7
 #define useCacheChk         8
 
+#define imageFormatMenu      300
+#define formatAutoDetectItem 301
+#define format2mgItem        302
+#define formatRawItem        303
+#define formatDOSOrderItem   304
+
 #define netDiskMissingError 3000
 #define mountURLError       3001
 #define unsupportedProtocolAlert 3002
@@ -48,6 +54,8 @@ char urlBuf[257];
 WindowPtr wPtr = NULL;
 
 Boolean useCache;
+
+enum DiskImageFormat format;
 
 struct MountURLRec mountURLRec = {sizeof(struct MountURLRec)};
 
@@ -91,6 +99,8 @@ void DoMount(void)
     if (useCache) {
         mountURLRec.flags |= flgUseCache;
     }
+    
+    mountURLRec.format = format;
 
     SendRequest(MountURL, sendToName|stopAfterOne, (Long)NETDISK_REQUEST_NAME,
                 (Long)&mountURLRec, NULL);
@@ -123,6 +133,21 @@ void DoHit(long ctlID, CtlRecHndl ctlHandle)
         DoMount();
     } else if (ctlID == useCacheChk) {
         useCache = !useCache;
+    } else if (ctlID == imageFormatMenu) {
+        switch (GetCtlValue(ctlHandle)) {
+        case formatAutoDetectItem:
+            format = formatAutoDetect;
+            break;
+        case format2mgItem:
+            format = format2mg;
+            break;
+        case formatRawItem:
+            format = formatRaw;
+            break;
+        case formatDOSOrderItem:
+            format = formatDOSOrder;
+            break;
+        }
     }
 
     return;

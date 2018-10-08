@@ -23,7 +23,7 @@ resource rCDEVFlags (1) {
     1,                          /* version */
     1,                          /* min ROM version */
     0,                          /* reserved */
-    {0, 0, 55, 320},            /* rectangle */
+    {0, 0, 71, 320},            /* rectangle */
     "NetDisk",                  /* name */
     "Stephen Heumann",          /* author */
     "v1.0b1"                    /* version string */
@@ -91,6 +91,11 @@ resource rIcon (1) {
 
 #define helpTxt             5
 
+#define imageFormatMenu      300
+#define formatAutoDetectItem 301
+#define format2mgItem        302
+#define formatRawItem        303
+#define formatDOSOrderItem   304
 
 /*
  * Controls in the control panel window (for 640 mode or 320 mode)
@@ -101,8 +106,7 @@ resource rControlList (640) {
         cdevWindow+urlLine,
         cdevWindow+useCacheChk,
         cdevWindow+mountBtn,
-        //cdevWindow+trianglePic,
-        //cdevWindow+optionsPopUp
+        cdevWindow+imageFormatMenu
     };
 };
 
@@ -112,14 +116,13 @@ resource rControlList (320) {
         cdevWindow+urlLine,
         cdevWindow+useCacheChk,
         cdevWindow+mountBtn,
-        //cdevWindow+trianglePic+320,
-        //cdevWindow+optionsPopUp+320
+        cdevWindow+imageFormatMenu+320
     };
 };
 
 resource rControlTemplate (cdevWindow+imageURLTxt) {
     imageURLTxt,                            /* control ID */
-    {4, 10, 15, 270},                       /* control rect */
+    {4, 9, 15, 270},                        /* control rect */
     statTextControl {{
         fBlastText,                         /* flags */
         $1000+RefIsResource,                /* moreFlags */
@@ -148,7 +151,7 @@ resource rPString (cdevWindow+urlLine) { "http://" };
 
 resource rControlTemplate (cdevWindow+mountBtn) {
     mountBtn,
-    {35, 156, 0, 0},
+    {50, 156, 0, 0},
     SimpleButtonControl {{
         DefaultButton,
         $3000+RefIsResource,
@@ -163,7 +166,7 @@ resource rPString(cdevWindow+mountBtn) { "Mount Disk Image" };
 
 resource rControlTemplate (cdevWindow+useCacheChk) {
     useCacheChk,
-    {37,10,0,0},
+    {52,10,0,0},
     CheckControl {{
         $0000,
         $1002,
@@ -174,77 +177,85 @@ resource rControlTemplate (cdevWindow+useCacheChk) {
 };
 resource rPString (cdevWindow+useCacheChk) {"Use Disk Cache"};
 
-#if 0
-/* Options menu pop-up -- separate versions for 640 mode and 320 mode */
-resource rControlTemplate (cdevWindow+optionsPopUp) {
-    optionsPopUp,
-    {5, 282, 13, 310 },
+
+/* Disk image format pop-up menu */
+
+resource rControlTemplate (cdevWindow+imageFormatMenu) {
+    imageFormatMenu,
+    {31, 8, 43, 314},
     PopUpControl {{
-        fDontDrawTitle+fDontDrawResult,
-        fCtlProcNotPtr+RefIsResource/*+fDrawPopDownIcon*/,
         0,
+        fCtlProcNotPtr+RefIsResource+fDrawPopDownIcon,
         0,
-        optionsMenu,                        /* menu ref */
-        optionsItem,                        /* initial value */
+        93,                                 /* title width */
+        imageFormatMenu,                    /* menu ref */
+        formatAutoDetectItem,               /* initial value */
         0
     }};
 };
 
-resource rControlTemplate (cdevWindow+optionsPopUp+ 320) {
-    optionsPopUp,
-    {5, 296, 13, 310 },
+resource rControlTemplate (cdevWindow+imageFormatMenu+320) {
+    imageFormatMenu,
+    {31, 8, 43, 312},
     PopUpControl {{
-        fDontDrawTitle+fDontDrawResult,
-        fCtlProcNotPtr+RefIsResource/*+fDrawPopDownIcon*/,
         0,
+        fCtlProcNotPtr+RefIsResource+fDrawPopDownIcon,
         0,
-        optionsMenu,                        /* menu ref */
-        optionsItem,                        /* initial value */
+        95,                                 /* title width */
+        imageFormatMenu,                    /* menu ref */
+        formatAutoDetectItem,               /* initial value */
         0
     }};
 };
 
-/* Triangle to draw on options pop-up */
-resource rControlTemplate (cdevWindow+trianglePic) {
-    trianglePic,
-    {7, 286, 11, 302},
-    PictureControl {{
-        CtlInactive,
-        fCtlProcNotPtr+RefIsResource,
-        0,
-        trianglePic                         /* picture reference */
-    }};
-};
-
-resource rControlTemplate (cdevWindow+trianglePic+320) {
-    trianglePic,
-    {7, 298, 0, 0},
-    PictureControl {{
-        CtlInactive,
-        fCtlProcNotPtr+RefIsResource,
-        0,
-        trianglePic                         /* picture reference */
-    }};
-};
-
-data rPicture (trianglePic) {
-    $"8000 0000 0000 0400 1000 1182 0100 0A00"
-    $"01C0 01C0 FF3F FF3F 9000 8000 0000 0400"
-    $"0000 0000 0400 1000 0000 0000 0400 1000"
-    $"0000 0000 0400 1000 0000 0000 0000 F000"
-    $"000F FF00 00FF FFF0 0FFF"
-};
-
-resource rMenu (optionsMenu) {
-    optionsMenu,                            /* menu ID */
+resource rMenu (imageFormatMenu) {
+    imageFormatMenu,                        /* menu ID */
     refIsResource*menuTitleRefShift + refIsResource*itemRefShift,
-    optionsMenu,                            /* menu title ref (not drawn) */
+    imageFormatMenu,                        /* menu title ref (not drawn) */
     {
-        //items go here
+        formatAutoDetectItem,
+        format2mgItem,
+        formatRawItem,
+        formatDOSOrderItem
     };
 };
-resource rPString(optionsMenu,noCrossBank) { "" };
-#endif
+resource rPString(imageFormatMenu,noCrossBank) { "Image Format" };
+
+resource rMenuItem (formatAutoDetectItem) {
+    formatAutoDetectItem,                   /* menu item ID */
+    "","",
+    0,
+    refIsResource*itemTitleRefShift,
+    formatAutoDetectItem                    /* menu item title ref */
+};
+resource rPString(formatAutoDetectItem,noCrossBank) { "Auto-Detect" };
+
+resource rMenuItem (format2mgItem) {
+    format2mgItem,                          /* menu item ID */
+    "","",
+    0,
+    refIsResource*itemTitleRefShift,
+    format2mgItem                           /* menu item title ref */
+};
+resource rPString(format2mgItem,noCrossBank) { "Universal Disk Image (2MG)" };
+
+resource rMenuItem (formatRawItem) {
+    formatRawItem,                          /* menu item ID */
+    "","",
+    0,
+    refIsResource*itemTitleRefShift,
+    formatRawItem                           /* menu item title ref */
+};
+resource rPString(formatRawItem,noCrossBank) { "ProDOS Order/Raw/ISO" };
+
+resource rMenuItem (formatDOSOrderItem) {
+    formatDOSOrderItem,                     /* menu item ID */
+    "","",
+    0,
+    refIsResource*itemTitleRefShift,
+    formatDOSOrderItem                      /* menu item title ref */
+};
+resource rPString(formatDOSOrderItem,noCrossBank) { "DOS Order" };
 
 /*
  * Controls in the help window

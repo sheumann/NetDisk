@@ -38,7 +38,8 @@ enum NetDiskError {
     
     /* File format errors */
     UNSUPPORTED_2IMG_FILE = 600,
-    NOT_MULTIPLE_OF_BLOCK_SIZE
+    NOT_MULTIPLE_OF_BLOCK_SIZE,
+    NOT_SPECIFIED_IMAGE_TYPE
     
 };
 

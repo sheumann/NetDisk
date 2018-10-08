@@ -11,11 +11,19 @@
 /* Bits in flags */
 #define flgUseCache 0x0001
 
+enum DiskImageFormat {
+    formatAutoDetect = 0,
+    format2mg,
+    formatRaw,
+    formatDOSOrder
+};
+
 struct MountURLRec {
     Word byteCount;
     enum NetDiskError result; /* output value */
     char *url; /* C-string; will be modified */
     Word flags;
+    enum DiskImageFormat format; /* input/output value */
     Word devNum; /* output value: device number */
 };
 
