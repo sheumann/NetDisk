@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <types.h>
 #include <tcpip.h>
 #include <misctool.h>
@@ -223,11 +224,11 @@ netRetry:
         goto errorReturn;
     response++;
     
-    while (*response != '\r' && response < responseEnd)
+    while (*response != '\r')
         response++;
     response++;
     
-    if (*response != '\n' && response < responseEnd)
+    if (*response != '\n')
         goto errorReturn;
     response++;
 
@@ -270,7 +271,7 @@ netRetry:
     
     result = UNSUPPORTED_HEADER_VALUE;
 
-    while (response < responseEnd - 2) {
+    while (response < responseEnd - 4) {
         enum ResponseHeader header = UNKNOWN_HEADER;
         
         if (wantRedirect) {
@@ -278,23 +279,29 @@ netRetry:
                 response += 9;
                 header = LOCATION;
             }
-        } else {
+        } else switch (_toupper(*response)) {
+        case 'C':
             if (strncasecmp(response, "Content-Range:", 14) == 0) {
                 response += 14;
                 header = CONTENT_RANGE;
             } else if (strncasecmp(response, "Content-Length:", 15) == 0) {
                 response += 15;
                 header = CONTENT_LENGTH;
-            } else if (strncasecmp(response, "Transfer-Encoding:", 18) == 0) {
-                response += 18;
-                header = TRANSFER_ENCODING;
             } else if (strncasecmp(response, "Content-Encoding:", 17) == 0) {
                 response += 17;
                 header = CONTENT_ENCODING;
             }
+            break;
+        
+        case 'T':
+            if (strncasecmp(response, "Transfer-Encoding:", 18) == 0) {
+                response += 18;
+                header = TRANSFER_ENCODING;
+            }
+            break;
         }
         
-        while ((*response == ' ' || *response == '\t') && response < responseEnd)
+        while (*response == ' ' || *response == '\t')
             response++;
         
         switch (header) {
@@ -369,7 +376,7 @@ netRetry:
         /* Unknown headers: ignored */
         case UNKNOWN_HEADER:
         default:
-            while (*response != '\r' && response < responseEnd)
+            while (*response != '\r')
                 response++;
             break;
         }
