@@ -21,12 +21,14 @@ Compatibility
 -------------
 NetDisk can access disk image files on most servers that allow unencrypted HTTP access.  The server must also support HTTP range requests.  Most modern servers support these, but some may not, in which case an error message will be shown.
 
-NetDisk supports raw (aka ProDOS-order and various other names) or 2MG disk images.  DOS-order images and other formats are not supported.  The images may use any filesystem for which you have an FST installed, except that DOS 3.3 filesystems are not supported due to a limitation in that FST.  You can use images of any size (subject to the limitations of the relevant FST), from floppy disks to large hard drive partitions or CD-ROMS.
+NetDisk supports raw (aka ProDOS-order and various other names), 2MG, and DOS-order disk images.  The images may use any filesystem for which you have an FST installed, except that DOS 3.3 filesystems are not supported due to a limitation in that FST.  You can use images of any size (subject to the limitations of the relevant FST), from floppy disks to large hard drive partitions or CD-ROMS.
 
 
 Usage
 -----
 To mount a disk image, simply open the __NetDisk__ control panel, enter the http:// URL for the image to be mounted, and click __Mount Disk Image__.  If you do not get an error message, the disk will now be mounted and accessible.  If you are in the Finder, it will appear on the desktop.
+
+You can explicitly select the disk image format using the __Format__ pop-up menu.  In most cases this can be left at the default "Auto-Detect" setting to let NetDisk detect the format of the image, but you can explicitly specify a format if the auto-detection does not work properly.
 
 The __Use Disk Cache__ check box controls whether the standard GS/OS disk caching mechanism should be used with the disk image.  This box should normally be left checked, since it improves performance.  You should un-check it if the disk image on the server might change while you have it mounted (but note that such changes can cause problems in some cases even if caching is disabled).
 
