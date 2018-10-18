@@ -15,6 +15,7 @@
 #include "mounturl.h"
 #include "systemservices.h"
 #include "version.h"
+#include "endian.h"
 
 #define BLOCK_SIZE 512
 
@@ -25,6 +26,8 @@
 /* The sectors making up each block within a track (using DOS 3.3 numbering) */
 static const int sectorMap[2][8] = {{ 0, 13, 11, 9, 7, 5, 3,  1},
                                     {14, 12, 10, 8, 6, 4, 2, 15}};
+
+#define APPLE_35_DISK_SIZE (800L * 1024)
 
 struct DIB dibs[NDIBS] = {0};
 struct DIBList dibList = {NDIBS};
@@ -211,6 +214,38 @@ Word DriverDispatch(Word callNum, struct GSOSDP *dp) {
 #pragma databank 0
 
 /*
+ * Check for a valid DiskCopy 4.2 header, and process it if found.
+ * Returns a non-zero error code for an invalid or unsupported DC42 file, 
+ * OPERATION_SUCCESSFUL otherwise (whether it's a DC42 file or not).
+ */
+static enum NetDiskError CheckDiskCopy42(Session *sess) {
+    struct DiskCopy42Header *hdr = &sess->fileHeader.diskCopy42Header;
+
+    if (sess->totalLength == DISK_II_DISK_SIZE)
+        return OPERATION_SUCCESSFUL;
+    if (sess->totalLength == APPLE_35_DISK_SIZE)
+        return OPERATION_SUCCESSFUL;
+
+    if (hdr->private != DC42_MAGIC)
+        return OPERATION_SUCCESSFUL;
+
+    if (hdr->dataSize == 0 || ntohl(hdr->dataSize) % BLOCK_SIZE != 0)
+        return OPERATION_SUCCESSFUL;
+
+    if ((unsigned char)hdr->diskName[0] >= DC42_DISK_NAME_LEN)
+        return OPERATION_SUCCESSFUL;
+
+    if (ntohl(hdr->dataSize) + ntohl(hdr->tagSize) + DC42_DATA_OFFSET 
+        != sess->totalLength)
+        return OPERATION_SUCCESSFUL;
+
+    sess->dataOffset = DC42_DATA_OFFSET;
+    sess->dataLength = ntohl(hdr->dataSize);
+
+    return OPERATION_SUCCESSFUL;
+}
+
+/*
  * Check for a 2IMG file, and process its header if one is found.
  * Returns a non-zero error code for an invalid or unsupported 2IMG file, 
  * OPERATION_SUCCESSFUL otherwise (whether it's a 2IMG file or not).
@@ -312,6 +347,25 @@ static Word DoMountURL(struct GSOSDP *dp) {
         if (sess->dataOffset != 0) {
             mountURLRec->format = format2mg;
         } else if (mountURLRec->format == format2mg) {
+            dp->transferCount = 0;
+            mountURLRec->result = NOT_SPECIFIED_IMAGE_TYPE;
+            return drvrIOError;
+        }
+    }
+    
+    if (mountURLRec->format == formatAutoDetect 
+        || mountURLRec->format == formatDiskCopy42)
+    {
+        err = CheckDiskCopy42(sess);
+        if (err != OPERATION_SUCCESSFUL) {
+            EndNetDiskSession(sess);
+            dp->transferCount = 0;
+            mountURLRec->result = err;
+            return drvrIOError;
+        }
+        if (sess->dataOffset == DC42_DATA_OFFSET) {
+            mountURLRec->format = formatDiskCopy42;
+        } else if (mountURLRec->format == formatDiskCopy42) {
             dp->transferCount = 0;
             mountURLRec->result = NOT_SPECIFIED_IMAGE_TYPE;
             return drvrIOError;

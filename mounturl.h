@@ -15,7 +15,8 @@ enum DiskImageFormat {
     formatAutoDetect = 0,
     format2mg,
     formatRaw,
-    formatDOSOrder
+    formatDOSOrder,
+    formatDiskCopy42
 };
 
 struct MountURLRec {

@@ -3,6 +3,7 @@
 
 #include <types.h>
 #include "twoimg.h"
+#include "diskcopy42.h"
 
 typedef struct Session {
     /* Marinetti TCP connection status */
@@ -63,8 +64,9 @@ typedef struct Session {
     
     /* Buffer for initial bytes of file (which may be a disk image header) */
     union {
-        unsigned char buf[32];
+        unsigned char buf[84];
         struct TwoImgHeader twoImgHeader;
+        struct DiskCopy42Header diskCopy42Header;
     } fileHeader;
 } Session;
 

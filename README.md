@@ -21,7 +21,7 @@ Compatibility
 -------------
 NetDisk can access disk image files on most servers that allow unencrypted HTTP access.  The server must also support HTTP range requests.  Most modern servers support these, but some may not, in which case an error message will be shown.
 
-NetDisk supports raw (aka ProDOS-order and various other names), 2MG, and DOS-order disk images.  The images may use any filesystem for which you have an FST installed, except that DOS 3.3 filesystems are not supported due to a limitation in that FST.  You can use images of any size (subject to the limitations of the relevant FST), from floppy disks to large hard drive partitions or CD-ROMS.
+NetDisk supports raw (aka ProDOS-order and various other names), 2MG, DOS-order, and DiskCopy 4.2 disk images.  The images may use any filesystem for which you have an FST installed, except that DOS 3.3 filesystems are not supported due to a limitation in that FST.  You can use images of any size (subject to the limitations of the relevant FST), from floppy disks to large hard drive partitions or CD-ROMS.
 
 
 Usage

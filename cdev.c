@@ -41,6 +41,7 @@
 #define format2mgItem        302
 #define formatRawItem        303
 #define formatDOSOrderItem   304
+#define formatDiskCopy42Item 305
 
 #define netDiskMissingError 3000
 #define mountURLError       3001
@@ -146,6 +147,9 @@ void DoHit(long ctlID, CtlRecHndl ctlHandle)
             break;
         case formatDOSOrderItem:
             format = formatDOSOrder;
+            break;
+        case formatDiskCopy42Item:
+            format = formatDiskCopy42;
             break;
         }
     }

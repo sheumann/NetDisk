@@ -96,6 +96,7 @@ resource rIcon (1) {
 #define format2mgItem        302
 #define formatRawItem        303
 #define formatDOSOrderItem   304
+#define formatDiskCopy42Item 305
 
 /*
  * Controls in the control panel window (for 640 mode or 320 mode)
@@ -202,7 +203,8 @@ resource rMenu (imageFormatMenu) {
         formatAutoDetectItem,
         format2mgItem,
         formatRawItem,
-        formatDOSOrderItem
+        formatDOSOrderItem,
+        formatDiskCopy42Item,
     };
 };
 resource rPString(imageFormatMenu,noCrossBank) { "Format: " };
@@ -242,6 +244,15 @@ resource rMenuItem (formatDOSOrderItem) {
     formatDOSOrderItem                      /* menu item title ref */
 };
 resource rPString(formatDOSOrderItem,noCrossBank) { "DOS Order" };
+
+resource rMenuItem (formatDiskCopy42Item) {
+    formatDiskCopy42Item,                   /* menu item ID */
+    "","",
+    0,
+    refIsResource*itemTitleRefShift,
+    formatDiskCopy42Item                    /* menu item title ref */
+};
+resource rPString(formatDiskCopy42Item,noCrossBank) { "DiskCopy 4.2" };
 
 /*
  * Controls in the help window
