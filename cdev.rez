@@ -1,7 +1,7 @@
 #include "types.rez"
 
 resource rVersion (1) {
-    { 1,0,0,beta,2 },
+    { 1,0,0,beta,3 },
     verUS,
     "NetDisk",
     "By Stephen Heumann"
@@ -26,7 +26,7 @@ resource rCDEVFlags (1) {
     {0, 0, 71, 320},            /* rectangle */
     "NetDisk",                  /* name */
     "Stephen Heumann",          /* author */
-    "v1.0b2"                    /* version string */
+    "v1.0b3"                    /* version string */
 };
 
 read rCDevCode (0x1,convert,locked) "cdev.obj";
