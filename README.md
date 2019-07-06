@@ -10,8 +10,9 @@ The NetDisk package also comes with the Archive.org Disk Browser, a Finder exten
 System Requirements
 -------------------
 * An Apple IIGS with System 6.0.1 or later
-* Marinetti
+* Marinetti 3.0b11 or later
 * A Marinetti-compatible network interface (such as an Ethernet card)
+* 3 MB or more of memory recommended if using Archive.org Disk Browser
 
 
 Installation
