@@ -287,11 +287,18 @@ resource rTextForLETextBox2 (helpWindow+helpTxt) {
 #define netDiskMissingError 3000
 #define mountURLError       3001
 #define unsupportedProtocolAlert 3002
+#define marinettiMissingError 3003
 
 resource rAlertString (netDiskMissingError) {
     "62/"
     "To use this control panel, you must have NetDiskInit installed "
     "in the System:System.Setup folder on the boot disk."
+    "/^#0\$00"
+};
+
+resource rAlertString (marinettiMissingError) {
+    "62/"
+    "Marinetti is not available. You must install Marinetti to use NetDisk."
     "/^#0\$00"
 };
 

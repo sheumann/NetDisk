@@ -13,6 +13,9 @@ char *ErrorString(enum NetDiskError err) {
         return "No more disks can be mounted via NetDisk.";
     case OUT_OF_MEMORY:
         return "Out of memory.";
+    case MARINETTI_NOT_PRESENT:
+        return "Marinetti is not available. You must install Marinetti to use "
+               "NetDisk.";
 
     /* SetURL errors */
     case URL_TOO_LONG:

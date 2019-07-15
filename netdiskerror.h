@@ -8,6 +8,7 @@ enum NetDiskError {
     DISK_ALREADY_MOUNTED,
     NO_DIBS_AVAILABLE,
     OUT_OF_MEMORY,
+    MARINETTI_NOT_PRESENT,
 
     /* SetURL errors */
     URL_TOO_LONG = 200,
@@ -39,8 +40,12 @@ enum NetDiskError {
     /* File format errors */
     UNSUPPORTED_2IMG_FILE = 600,
     NOT_MULTIPLE_OF_BLOCK_SIZE,
-    NOT_SPECIFIED_IMAGE_TYPE
+    NOT_SPECIFIED_IMAGE_TYPE,
+    UNSUPPORTED_IMAGE_TYPE,
     
+    /* Errors related to processing JSON result in the disk browser */
+    JSON_PARSING_ERROR = 900,
+    NOT_EXPECTED_CONTENTS,
 };
 
 

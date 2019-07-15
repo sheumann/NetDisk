@@ -182,6 +182,11 @@ static void notificationProc(void) {
 #pragma databank 0
 
 static void doMountURL(struct MountURLRec *mountURLRec) {
+    if (!TCPIPStatus() || toolerror()) {
+        mountURLRec->result = MARINETTI_NOT_PRESENT;
+        return;
+    }
+
     DAccessRecGS controlRec = {5};
     controlRec.code = MountURL;
     controlRec.list = (pointer)mountURLRec;

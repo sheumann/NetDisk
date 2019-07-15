@@ -46,6 +46,7 @@
 #define netDiskMissingError 3000
 #define mountURLError       3001
 #define unsupportedProtocolAlert 3002
+#define marinettiMissingError 3003
 #define yesBtn 1        /* number of "Yes" button in alert */
 
 extern void FreeAllCDevMem(void);
@@ -168,6 +169,10 @@ long DoMachine(void)
     if (mountURLRec.result == NETDISK_NOT_PRESENT) {
         InitCursor();
         AlertWindow(awResource+awButtonLayout, NULL, netDiskMissingError);
+        return 0;
+    } else if (mountURLRec.result == MARINETTI_NOT_PRESENT) {
+        InitCursor();
+        AlertWindow(awResource+awButtonLayout, NULL, marinettiMissingError);
         return 0;
     }
 
