@@ -47,7 +47,10 @@
 #define mountURLError       3001
 #define unsupportedProtocolAlert 3002
 #define marinettiMissingError 3003
+#define marinettiVersionWarning 3004
 #define yesBtn 1        /* number of "Yes" button in alert */
+
+#define DESIRED_MARINETTI_VERSION 0x03006011 /* 3.0b11 */
 
 extern void FreeAllCDevMem(void);
 
@@ -174,6 +177,11 @@ long DoMachine(void)
         InitCursor();
         AlertWindow(awResource+awButtonLayout, NULL, marinettiMissingError);
         return 0;
+    }
+    
+    if (TCPIPLongVersion() < DESIRED_MARINETTI_VERSION) {
+        InitCursor();
+        AlertWindow(awResource+awButtonLayout, NULL, marinettiVersionWarning);
     }
 
     return 1;

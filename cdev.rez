@@ -288,6 +288,7 @@ resource rTextForLETextBox2 (helpWindow+helpTxt) {
 #define mountURLError       3001
 #define unsupportedProtocolAlert 3002
 #define marinettiMissingError 3003
+#define marinettiVersionWarning 3004
 
 resource rAlertString (netDiskMissingError) {
     "62/"
@@ -315,4 +316,15 @@ resource rAlertString (unsupportedProtocolAlert) {
     "or may not support this.)"
     ":#3:^#2\$00"
 };
+
+resource rAlertString (marinettiVersionWarning) {
+    "84:"
+    "NetDisk is designed for use with Marinetti 3.0b11 or later.\n"
+    "You are currently using an older version of Marinetti.\n"
+    "You can try to use NetDisk with your current Marinetti version,\n"
+    "but you may experience I/O errors or other problems.\n"
+    "To ensure proper operation, please upgrade Marinetti."
+    ":^#6\$00"
+};
+
 
