@@ -6,14 +6,18 @@ NetDisk is an Apple IIGS utility that allows you to mount disks images hosted on
 
 The NetDisk package also comes with the Archive.org Disk Browser, a Finder extension that lets you conveniently search for disk images on the Internet Archive (archive.org) and mount them using NetDisk.
 
+__To download the latest versions of NetDisk and the Archive.org Disk Browser, visit the [releases page][1].__
+
+[1]: https://github.com/sheumann/NetDisk/releases
 
 System Requirements
 -------------------
 * An Apple IIGS with System 6.0.1 or later
-* Marinetti 3.0b11 or later
+* [Marinetti][2] 3.0b11 or later
 * A Marinetti-compatible network interface (such as an Ethernet card)
 * 3 MB or more of memory recommended if using Archive.org Disk Browser
 
+[2]: http://www.apple2.org/marinetti/
 
 Installation
 ------------
@@ -57,4 +61,12 @@ When the search is done, a list of matching disks will be displayed.  You can se
 
 Troubleshooting Notes
 ---------------------
-* In some system configurations, there can be a compatibility issue between GUPP 1.07 and NetDisk, which manifests itself as hanging when starting or quitting applications.  If you experience this, I suggest either disabling GUPP or downgrading to GUPP 1.06.  You may also be able to work around this by changing the order of inits or disabling other inits that patch tools.
+In some system configurations, there can be a compatibility issue between GUPP 1.07 and NetDisk, which manifests itself as hanging when starting or quitting applications.  If you experience this, I suggest either disabling GUPP or downgrading to GUPP 1.06.  You may also be able to work around this by changing the order of inits or disabling other inits that patch tools.
+
+
+Building NetDisk
+----------------
+The source code for NetDisk is available [on GitHub][3].  The source code for the Archive.org Disk Browser is also on GitHub, in [a separate repository][4].  To build them, you need ORCA/C (2.2.0 B3 or later) and ORCA/M.  Makefiles suitable for building on a modern system with Golden Gate are included.
+
+[3]: https://github.com/sheumann/NetDisk
+[4]: https://github.com/sheumann/DiskBrowser
