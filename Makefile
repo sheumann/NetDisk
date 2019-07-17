@@ -52,5 +52,5 @@ clean:
 %.a: %.c *.h
 	$(CC) $(CFLAGS) -c $<
 
-%.a: %.asm
+%.a: %.asm $(MACROS)
 	$(CC) $(CFLAGS) -c $<
