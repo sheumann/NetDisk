@@ -6,7 +6,7 @@ NetDisk is an Apple IIGS utility that allows you to mount disks images hosted on
 
 The NetDisk package also comes with the Archive.org Disk Browser, a Finder extension that lets you conveniently search for disk images on the Internet Archive (archive.org) and mount them using NetDisk.
 
-__To download the latest versions of NetDisk and the Archive.org Disk Browser, visit the [releases page][1].__
+__To download NetDisk and the Archive.org Disk Browser, visit the [releases page][1].__
 
 [1]: https://github.com/sheumann/NetDisk/releases
 
@@ -39,6 +39,8 @@ NetDisk supports raw (aka ProDOS-order and various other names), 2MG, DOS-order,
 
 Using NetDisk
 -------------
+![Screenshot of the NetDisk Control Panel](screenshot1.png)
+
 To mount a disk image, simply open the __NetDisk__ control panel, enter the http:// URL for the image to be mounted, and click __Mount Disk Image__.  If you do not get an error message, the disk will now be mounted and accessible.  If you are in the Finder, it will appear on the desktop.
 
 You can explicitly select the disk image format using the __Format__ pop-up menu.  In most cases this can be left at the default "Auto-Detect" setting to let NetDisk detect the format of the image, but you can explicitly specify a format if the auto-detection does not work properly.
@@ -52,6 +54,8 @@ When you are done with a disk image, you can unmount it as you would any other d
 
 Using the Archive.org Disk Browser
 ----------------------------------
+![Screenshot of the Archive.org Disk Browser](screenshot2.png)
+
 The Archive.org Disk Browser is a Finder extension that lets you search for disk images on the Internet Archive (archive.org) and mount then using NetDisk.  To use it, select __Archive.org Disk Browser...__ in the Finder's __Extras__ menu.
 
 In the disk browser window, you can enter what to search for, choose if you want to find disks for the Apple IIGS or any Apple II, and then click __Find Disks__ to find any matching disks.  
