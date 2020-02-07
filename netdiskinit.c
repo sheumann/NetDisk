@@ -156,11 +156,10 @@ int main(void) {
     /* Accept requests (notifications) from Marinetti */
     AcceptRequests(TCPIP_REQUEST_NAME, userid(), &tcpipRequestProc);
 
-    return;
+    return 0;
     
 error:
     setUnloadFlag();
-    return;
 }
 
 /*
